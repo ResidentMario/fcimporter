@@ -12,10 +12,11 @@ log = ""
 # TODO: Fully implement debugging reporting.
 
 # IMPROVEMENTS TO-DO
-# Implement a creator field for featured pictures.
+# Implement a creator field for featured pictures. DONE
 # Figure out how to get the start-end parameter in the report working.
 # Add a snippet view for what an article is about.
 # Run more tests to check for exceptional cases, document them, and figure out how to handle them.
+# Point it at the weekly FC draft pages, instead of at my sandbox!
 
 # A method to check the command line to see if debugging is enabled. Returns True if it is, False if it isn't.
 def setDebugStatus():
@@ -322,12 +323,13 @@ def addFeaturedContentNominators(featured_content_item):
 		# Same problem as with FPs. Solution is to get a list of all users on the page and then discard all but the first.
 		# Since there's no way to check co-nominations, whatever! Latitude of the FC writer.
 		list_of_nominators = [getListOfUniqueUsersFromData(data)[0]]
-	elif featured_content_item['type'] == 'Featured picture':
+	if featured_content_item['type'] == 'Featured picture':
 		# print("Checkpoint: in the FP loop.")
 		# Features pictures need to have two fields of information, one for the nominator and one for the creator.
 		# Thus we are actually passing two different fields in the case of featured pictures.
 		# Both are fairly easily distinguishable, however.
 		# First, nominators.
+		featured_content_item['creator'] = getCreator(data)
 		try:
 			list_of_nominators_raw = data[data.index('Support as nominator'):]
 		except ValueError:
@@ -469,9 +471,41 @@ def writeContentStringForFeaturedPicture(list_param):
 			ret += '\n* ' + '[[:' + item['title'] + ']] <small>\'\'('
 		else:
 			ret += '\n* ' + '[[:' + item['title'] + '|' + item['nomination'][item['nomination'].index('/') + 1:] + ']] <small>\'\'('
-		ret += '[[' + item['nomination'] + '|nominated]] by ' + makeContributorsStringFromList(item['nominators']) + ')\'\'</small> '
+		ret += 'created by ' + makeCreatorString(item['creator']) + '; ' + '[[' + item['nomination'] + '|nominated]] by ' + makeContributorsStringFromList(item['nominators']) + ')\'\'</small> '
+#		ret += '[[' + item['nomination'] + '|nominated]] by ' + makeContributorsStringFromList(item['nominators']) + ')\'\'</small> '
 		# print(str(item))
 	return ret
+
+# A method which retrieves the creator of a Featured picture, given raw data from a featured picture nomination.
+def getCreator(raw_data):
+	raw_data = raw_data[raw_data.index('Creator') + 8:]
+	raw_data = raw_data[:raw_data.index('<li>')]
+	raw_data = raw_data[raw_data.index('<dd>'):raw_data.index('</dd>') + 5]
+	print(raw_data)
+	if 'User:' in raw_data:
+		# print("Checkpoint.\n\n")
+		# return 'User:' + raw_data[raw_data.index('">') + 2:raw_data.index('</a>')]
+		ret = raw_data[raw_data.index('title="') + 7:]
+		return ret[:ret.index('">')]
+	elif '/wiki/' in raw_data:
+		return "$" + raw_data[raw_data.index('">') + 2:raw_data.index('</a>')]
+		# The "$" here is a special character which is used by makeCreatorString to figure out whether or not a plaintitled nomination can be linked to or not.
+		# So for instance Creator: [[Albert Duhrer]] will be stored as "$Albert Duhrer".
+		# While Creator: "My mate in Calcuta" will be stored as just "My mate in calculta"
+		# The script will determine in the method makeCreatorString() whether or not to add back the link based on the presence or absense of this first character.
+	elif '</a>' not in raw_data:
+		print(raw_data)
+		return raw_data[raw_data.index('<dd>') + 4:raw_data.index('</dd>')]
+	else:
+		return '???'
+
+def makeCreatorString(creator):
+	if 'User:' in creator:
+		return '[[' + creator + '|]]'
+	elif creator[0] == '$':
+		return '[[' + creator[1:] + '|]]'
+	else:
+		return creator
 
 # A method which returns a string of contributors, formatted for FC, given a list of contributors.
 def makeContributorsStringFromList(list_param):
@@ -554,6 +588,7 @@ target = setTargetPage()
 # print(addFeaturedContentNominators({'type': 'Featured article', 'ns': 0, 'title': 'A Quiet Night In', 'nomination': 'Wikipedia:Featured article candidates/A Quiet Night In/archive1'}))
 # print(addFeaturedContentNominators({'type': 'Featured article', 'ns': 0, 'title': 'Mauna Kea', 'nomination': 'Wikipedia:Featured article candidates/Mauna Kea/archive1'}))
 # print(addFeaturedContentNominators({'type': 'Featured article', 'ns': 0, 'title': 'List of works by Georgette Heyer', 'nomination': 'Wikipedia:Featured list candidates/List of works by Georgette Heyer/archive1'}))
+# print(addFeaturedPictureNomination({'title': 'File:Johannes Vermeer - Gezicht op huizen in Delft, bekend als \'Het straatje\' - Google Art Project.jpg'}))
 # print(addFeaturedContentNominators({'type': 'Featured picture', 'ns': 4, 'title': 'File:Girl in White by Vincent Van Gogh - NGA.jpg', 'nomination': 'Wikipedia:Featured picture candidates/Girl in White'}))
 # print(getListOfUniqueUsersFromData(requests.get('https://en.wikipedia.org/wiki/Wikipedia:Featured_picture_candidates/Paper_wasp_in_nest').text))
 # print(makeStringOfGOPageCandidates())

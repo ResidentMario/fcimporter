@@ -193,7 +193,7 @@ def getFeaturedContent():
 	print("Removing non-featured content from candidates list and adding featured status classes...")
 	i = 0
 	while i < len(featured_content_candidates):
-		print("Now checking the legitimacy of the following: " + str(featured_content_candidates[i]))
+		# print("Now checking the legitimacy of the following: " + str(featured_content_candidates[i]))
 		item = checkFeaturedContentCandidate(featured_content_candidates[i])
 		# print("Result of this check: " + str(item))
 		if len(list(item.keys())) != 0:
@@ -209,7 +209,7 @@ def getFeaturedContent():
 # It then searchs for the content's nomination page and attached new data to the dict: the nomination page and the nominator.
 # It returns a dict of the form {'title': 'article_title', 'ns': '#', 'type': 'Featured article', 'nomination': 'nomination_page', 'nominators:': [userOne, userTwo, ...]}
 def addLatestFeaturedContentNomination(featured_content_item):
-	print("Featured content item: " + str(featured_content_item))
+	# print("Featured content item: " + str(featured_content_item))
 	if featured_content_item['type'] == 'Featured article' or featured_content_item['type'] == 'Featured list':
 		api_request_parameters = {'action': 'query', 'prop': 'links', 'titles': 'Talk:' + featured_content_item['title'], 'pltitles': createFeaturedCandidacyPageLinkChecklist(featured_content_item), 'format': 'json', 'pllimit': '500'}
 	elif featured_content_item['type'] == 'Featured topic':
@@ -225,9 +225,9 @@ def addLatestFeaturedContentNomination(featured_content_item):
 	nomination_pages = nomination_pages['pages']
 	page_id_key = list(nomination_pages.keys())
 	nomination_pages = nomination_pages[page_id_key[0]]
-	print("Nominations page: " + str(nomination_pages))
+	# print("Nominations page: " + str(nomination_pages))
 	del nomination_pages['title'], nomination_pages['ns'], nomination_pages['pageid']
-	print(str(nomination_pages))
+	# print(str(nomination_pages))
 	nomination_pages = nomination_pages['links']
 	# print("Nomination pages: " + str(nomination_pages))
 	latest_nomination_page = nomination_pages[len(nomination_pages) - 1]['title']
@@ -443,12 +443,14 @@ def writeContentStringForFeaturedContentType(list_param, content_type):
 		print(str(list_of_stuff[i]))
 	for item in list_of_stuff:
 		# print(str(item))
-		ret += '\n* ' + '[[' + item['title'] + ']] <small>\'\'('
-		ret += '[[' + item['nomination'] + '|nominated]] by ' + makeContributorsStringFromList(item['nominators']) + ')\'\'</small>:'
+		ret += '\n* ' + '[[:' + item['title'] + ']] <small>\'\'('
+		ret += '[[' + item['nomination'] + '|nominated]] by ' + makeContributorsStringFromList(item['nominators']) + ')\'\'</small> '
 	return ret
 
 # A method which returns a string of contributors, formatted for FC, given a list of contributors.
 def makeContributorsStringFromList(list_param):
+	for i in range(0, len(list_param)):
+		list_param[i] = removeUnderscoresFromUsername(list_param[i])
 	ret = ''
 	if len(list_param) == 1:
 		ret = '[[' + list_param[0] + '|]]'
@@ -456,6 +458,15 @@ def makeContributorsStringFromList(list_param):
 		for i in range(0, len(list_param) - 1):
 			ret += '[[' + list_param[i] + '|]]' + ', '
 		ret += 'and [[' + list_param[len(list_param) - 1] + '|]]'
+	return ret
+
+# A helper method which removes underscores ('_') betwixt usernames. Care must be taken not to take away leading or trailing underscores.
+def removeUnderscoresFromUsername(name):
+	ret = name
+	if '_' in name:
+		for i in range(1, len(name) - 1):
+			if ret[i] == '_' and ret[i - 1] != '_' and ret[i + 1] != '_':
+				ret = ret[0:i] + ' ' + ret[i + 1:len(name)]
 	return ret
 
 # TODO: Break this up into steps.
@@ -521,6 +532,5 @@ for item in featuredContent:
 prettyPrintListOfDicts(featuredContent)
 # prettyPrintListOfDicts(extractFeaturedContentOfOneType(featuredContent, 'Featured pictures'))
 # print(writeContentStringForFeaturedContentType(featuredContent, 'Featured article'))
-print(writeContentString(featuredContent))
-
-# writePage(str(featuredContent), 'User:Resident Mario/sandbox'
+to_be_written = writeContentString(featuredContent)
+writePage(to_be_written, 'User:Resident Mario/sandbox')

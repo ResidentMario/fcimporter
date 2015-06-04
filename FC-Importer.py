@@ -11,10 +11,11 @@ target = "Wikipedia:Goings-on"
 log = ""
 # TODO: Fully implement debugging reporting.
 
-# REMAINING TASKS
-# Generate the final output string.
-# Write getNameOfLatestFCRPage(), a method which returns the most recent Signpost Featured content report page.
-# Pass it all off to writePage for final writing.
+# IMPROVEMENTS TO-DO
+# Implement a creator field for featured pictures.
+# Figure out how to get the start-end parameter in the report working.
+# Add a snippet view for what an article is about.
+# Run more tests to check for exceptional cases, document them, and figure out how to handle them.
 
 # A method to check the command line to see if debugging is enabled. Returns True if it is, False if it isn't.
 def setDebugStatus():
@@ -408,7 +409,7 @@ def getNameOfLatestGOPage():
 def makeStringOfGOPageCandidates():
 	ret = ''
 	pythonic_date = datetime.date.today()
-	for i in range(0, 15):
+	for i in range(7, 22):
 		pythonic_date -= datetime.timedelta(days=1)
 		ret += "Wikipedia:Goings-on/" + pythonic_date.strftime("%B" + " ")
 		ret += str(pythonic_date.day).lstrip('0')
@@ -451,6 +452,27 @@ def writeContentStringForFeaturedContentType(list_param, content_type):
 		# print(str(item))
 	return ret
 
+# A method that does the same as the above, but is special to featured pictures, which must provide two more things:
+# 1. A creator.
+# 2. Check the string to see if it contains File:, if not then use that string as the description instead of the filename.
+def writeContentStringForFeaturedPicture(list_param):
+	ret = ''
+	list_of_stuff = extractFeaturedContentOfOneType(list_param, 'Featured picture')
+	if len(list_of_stuff) == 0:
+		return ret
+	ret += '===' + 'Featured picture' + 's===' + '\n'
+	ret += str(len(list_of_stuff)) + ' [[Wikipedia:' + 'Featured picture' + '|]]s were promoted this week.'
+	# for i in range(0, len(list_of_stuff)):
+		# print(str(list_of_stuff[i]))
+	for item in list_of_stuff:
+		if 'File:' in item['nomination']:
+			ret += '\n* ' + '[[:' + item['title'] + ']] <small>\'\'('
+		else:
+			ret += '\n* ' + '[[:' + item['title'] + '|' + item['nomination'][item['nomination'].index('/') + 1:] + ']] <small>\'\'('
+		ret += '[[' + item['nomination'] + '|nominated]] by ' + makeContributorsStringFromList(item['nominators']) + ')\'\'</small> '
+		# print(str(item))
+	return ret
+
 # A method which returns a string of contributors, formatted for FC, given a list of contributors.
 def makeContributorsStringFromList(list_param):
 	for i in range(0, len(list_param)):
@@ -463,6 +485,10 @@ def makeContributorsStringFromList(list_param):
 		for i in range(0, len(list_param) - 1):
 			ret += '[[' + list_param[i] + '|]]' + ', '
 		ret += 'and [[' + list_param[len(list_param) - 1] + '|]]'
+	if ret.count(',') <= 1:
+		ret = ret.replace(',', '')
+	if ret == '[[|]]':
+		ret = '???'
 	return ret
 
 # A method which removes the red-linking string in a username.
@@ -499,7 +525,7 @@ def writeContentString(list_of_featured_item_dicts):
 	ret += '\n' + writeContentStringForFeaturedContentType(list_of_featured_item_dicts, 'Featured list')
 	ret += '\n' + writeContentStringForFeaturedContentType(list_of_featured_item_dicts, 'Featured portal')
 	ret += '\n' + writeContentStringForFeaturedContentType(list_of_featured_item_dicts, 'Featured topic')
-	ret += '\n' + writeContentStringForFeaturedContentType(list_of_featured_item_dicts, 'Featured picture')
+	ret += writeContentStringForFeaturedPicture(list_of_featured_item_dicts) # spare space?
 	ret += '\n\n' + '''{{Wikipedia:Signpost/Template:Signpost-article-comments-end||{{subst:Wikipedia:Wikipedia Signpost/Issue|1}}|{{subst:Wikipedia:Wikipedia Signpost/Issue|4}}}}'''
 	return ret
 

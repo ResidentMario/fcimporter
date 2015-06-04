@@ -213,7 +213,7 @@ def addLatestFeaturedContentNomination(featured_content_item):
 	if featured_content_item['type'] == 'Featured article' or featured_content_item['type'] == 'Featured list':
 		api_request_parameters = {'action': 'query', 'prop': 'links', 'titles': 'Talk:' + featured_content_item['title'], 'pltitles': createFeaturedCandidacyPageLinkChecklist(featured_content_item), 'format': 'json', 'pllimit': '500'}
 	elif featured_content_item['type'] == 'Featured topic':
-		print("Contents of featured_content_item: " + str(featured_content_item))
+		# print("Contents of featured_content_item: " + str(featured_content_item))
 		api_request_parameters = {'action': 'query', 'prop': 'links', 'titles': 'Wikipedia talk:Featured topics/' + featured_content_item['title'][featured_content_item['title'].index('/') + 1:], 'pltitles': createFeaturedCandidacyPageLinkChecklist(featured_content_item), 'format': 'json', 'pllimit': '500'}
 	elif featured_content_item['type'] == 'Featured portal':
 		api_request_parameters = {'action': 'query', 'prop': 'links', 'titles': 'Portal talk:' + featured_content_item['title'][featured_content_item['title'].index(':') + 1:], 'pltitles': createFeaturedCandidacyPageLinkChecklist(featured_content_item), 'format': 'json', 'pllimit': '500'}
@@ -227,7 +227,6 @@ def addLatestFeaturedContentNomination(featured_content_item):
 	nomination_pages = nomination_pages[page_id_key[0]]
 	# print("Nominations page: " + str(nomination_pages))
 	del nomination_pages['title'], nomination_pages['ns'], nomination_pages['pageid']
-	# print(str(nomination_pages))
 	nomination_pages = nomination_pages['links']
 	# print("Nomination pages: " + str(nomination_pages))
 	latest_nomination_page = nomination_pages[len(nomination_pages) - 1]['title']
@@ -254,7 +253,7 @@ def createFeaturedCandidacyPageLinkChecklist(featured_content_item):
 	elif featured_content_item['type'] == 'Featured topic':
 		for n in range(1, 11):
 			ret += "Wikipedia:Featured topic candidates/" + featured_content_item['title'][featured_content_item['title'].index('/') + 1:] + "/archive" + str(n) + "|"
-			print("Featured topic ret string: " + ret)
+			# print("Featured topic ret string: " + ret)
 	elif featured_content_item['type'] == 'Featured picture':
 		# There is no consistent formatting for featured picture nominations, which are nominated with any one of three titles, none normalized.
 		# The first is with the filename. This we can check.
@@ -304,13 +303,13 @@ def addFeaturedPictureNomination(featured_picture_item):
 # It then carves out the names of the content nominators. It does this by isolating the segment of data where the interesting users occur, and then sending it to getListOfUniqueUsersFromData().
 def addFeaturedContentNominators(featured_content_item):
 	data = requests.get('https://en.wikipedia.org/wiki/' + featured_content_item['nomination']).text
-	print(data + '\n\n\n')
+	# print(data + '\n\n\n')
 	list_of_nominators = []
 	if featured_content_item['type'] == 'Featured article' or featured_content_item['type'] == 'Featured list':
 		# FAs/FLs have by far the most consistent nomination scheme for extraction.
 		data = data[data.index('Nominator(s):'):]
 		data = data[:data.index('</dl>') + 25]
-		print('\n' + data + '\n\n')
+		# print('\n' + data + '\n\n')
 		# +100 to make sure that a space is in the pickup. Having a space isn't as sure a bet as I initially thought; this is a workaround.
 		list_of_nominators = []
 		list_of_nominators = getListOfUniqueUsersFromData(data)
@@ -328,10 +327,15 @@ def addFeaturedContentNominators(featured_content_item):
 		# Thus we are actually passing two different fields in the case of featured pictures.
 		# Both are fairly easily distinguishable, however.
 		# First, nominators.
-		list_of_nominators_raw = data[data.index('Support as nominator'):]
+		try:
+			list_of_nominators_raw = data[data.index('Support as nominator'):]
+		except ValueError:
+			print("WARNING: " + featured_content_item['title'] + " is missing the 'Support as nominator' string, necessary for finding the FP's nominators. This step is being skipped in this case, and will have to be filled in manually.")
+			featured_content_item['nominators'] = ['']
+			return featured_content_item
 		# print(list_of_nominators_raw)
 		list_of_nominators_raw = list_of_nominators_raw[:list_of_nominators_raw.index('</li>') + 25]
-		print("Data inside of test: " + list_of_nominators_raw)
+		# print("Data inside of test: " + list_of_nominators_raw)
 		list_of_nominators = getListOfUniqueUsersFromData(list_of_nominators_raw)
 		# print(list_of_nominators)
 		# Creator is a free-form field so it can be a little more difficult.
@@ -367,8 +371,8 @@ def prettyPrintListOfDicts(list_of_dicts):
 def getListOfUniqueUsersFromData(data):
 	ret = []
 	# Populate the list.
-	print("\nData:\n\n " + data + "\n\n")
-	print("Is User: in data at the start? " + 'User:' in data)
+	# print("\nData:\n\n " + data + "\n\n")
+	# print("Is User: in data at the start? " + 'User:' in data)
 	while 'User:' in data:
 		p = data[data.index('User:'):]
 		p = p[:p.index(' ') - 1]
@@ -439,18 +443,19 @@ def writeContentStringForFeaturedContentType(list_param, content_type):
 		return ret
 	ret += '===' + content_type + 's===' + '\n'
 	ret += str(len(list_of_stuff)) + ' [[Wikipedia:' + content_type + '|]]s were promoted this week.'
-	for i in range(0, len(list_of_stuff)):
-		print(str(list_of_stuff[i]))
+	# for i in range(0, len(list_of_stuff)):
+		# print(str(list_of_stuff[i]))
 	for item in list_of_stuff:
-		# print(str(item))
 		ret += '\n* ' + '[[:' + item['title'] + ']] <small>\'\'('
 		ret += '[[' + item['nomination'] + '|nominated]] by ' + makeContributorsStringFromList(item['nominators']) + ')\'\'</small> '
+		# print(str(item))
 	return ret
 
 # A method which returns a string of contributors, formatted for FC, given a list of contributors.
 def makeContributorsStringFromList(list_param):
 	for i in range(0, len(list_param)):
 		list_param[i] = removeUnderscoresFromUsername(list_param[i])
+		list_param[i] = removeRedLinkedUsernames(list_param[i])
 	ret = ''
 	if len(list_param) == 1:
 		ret = '[[' + list_param[0] + '|]]'
@@ -458,6 +463,13 @@ def makeContributorsStringFromList(list_param):
 		for i in range(0, len(list_param) - 1):
 			ret += '[[' + list_param[i] + '|]]' + ', '
 		ret += 'and [[' + list_param[len(list_param) - 1] + '|]]'
+	return ret
+
+# A method which removes the red-linking string in a username.
+def removeRedLinkedUsernames(name):
+	ret = name
+	if '&amp;action=edit&amp;redlink=1' in ret:
+		ret = ret[0:ret.index('&amp;action=edit&amp;redlink=1')]
 	return ret
 
 # A helper method which removes underscores ('_') betwixt usernames. Care must be taken not to take away leading or trailing underscores.
@@ -469,7 +481,6 @@ def removeUnderscoresFromUsername(name):
 				ret = ret[0:i] + ' ' + ret[i + 1:len(name)]
 	return ret
 
-# TODO: Break this up into steps.
 # A method which creates a write-string to be passed to writePage() for writing at the end of this script's execution.
 # Returns the formatted wiki-content string.
 def writeContentString(list_of_featured_item_dicts):
@@ -534,3 +545,4 @@ prettyPrintListOfDicts(featuredContent)
 # print(writeContentStringForFeaturedContentType(featuredContent, 'Featured article'))
 to_be_written = writeContentString(featuredContent)
 writePage(to_be_written, 'User:Resident Mario/sandbox')
+print("Done!")

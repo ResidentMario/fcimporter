@@ -515,6 +515,8 @@ def makeContributorsStringFromList(list_param):
 	ret = ''
 	if len(list_param) == 1:
 		ret = '[[' + list_param[0] + '|]]'
+	elif len(list_param) == 0:
+		return '???'
 	else:
 		for i in range(0, len(list_param) - 1):
 			ret += '[[' + list_param[i] + '|]]' + ', '

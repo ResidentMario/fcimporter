@@ -436,6 +436,16 @@ def extractFeaturedContentOfOneType(list_param, content_type):
 			ret.append(list_param[i])
 	return ret
 
+# Strips content before colons and slashes out of a string. Used as a text transform in writeContentStringForFeaturedContentType().
+# Used to generate a link, so that we can get the simplest linking possible: either [[James Franco|]], not [[James Franco|James Franco]].
+# And [[Wikipedia:Featured topics/Overview of Lorde|Overview of Lorde]], not [[Wikipedia:Featured topics/Overview of Lorde|Featured topics/Overview of Lorde]].
+def stripSubpage(string):
+	while ':' in string:
+		string = string[string.index(':') + 1:]
+	while '/' in string:
+		string = string[string.index('/') + 1:]
+	return string
+
 # A method which returns the FC report section of a particular content type.
 # Uses extractFeaturedContentOfOneType() to generate the list of promoted content of that type, and then iterates through it.
 # Returns a content string.
@@ -449,7 +459,7 @@ def writeContentStringForFeaturedContentType(list_param, content_type):
 	# for i in range(0, len(list_of_stuff)):
 		# print(str(list_of_stuff[i]))
 	for item in list_of_stuff:
-		ret += '\n* ' + '[[:' + item['title'] + ']] <small>\'\'('
+		ret += '\n* <b>' + '[[:' + item['title'] + '|' + stripSubpage(item['title']) + ']]</b> <small>\'\'('
 		ret += '[[' + item['nomination'] + '|nominated]] by ' + makeContributorsStringFromList(item['nominators']) + ')\'\'</small> '
 		# print(str(item))
 	return ret
@@ -468,9 +478,9 @@ def writeContentStringForFeaturedPicture(list_param):
 		# print(str(list_of_stuff[i]))
 	for item in list_of_stuff:
 		if 'File:' in item['nomination']:
-			ret += '\n* ' + '[[:' + item['title'] + ']] <small>\'\'('
+			ret += '\n* <b>' + '[[:' + item['title'] + ']]</b> <small>\'\'('
 		else:
-			ret += '\n* ' + '[[:' + item['title'] + '|' + item['nomination'][item['nomination'].index('/') + 1:] + ']] <small>\'\'('
+			ret += '\n* <b>' + '[[:' + item['title'] + '|' + item['nomination'][item['nomination'].index('/') + 1:] + ']]</b> <small>\'\'('
 		ret += 'created by ' + makeCreatorString(item['creator']) + '; ' + '[[' + item['nomination'] + '|nominated]] by ' + makeContributorsStringFromList(item['nominators']) + ')\'\'</small> '
 #		ret += '[[' + item['nomination'] + '|nominated]] by ' + makeContributorsStringFromList(item['nominators']) + ')\'\'</small> '
 		# print(str(item))
@@ -481,7 +491,7 @@ def getCreator(raw_data):
 	raw_data = raw_data[raw_data.index('Creator') + 8:]
 	raw_data = raw_data[:raw_data.index('<li>')]
 	raw_data = raw_data[raw_data.index('<dd>'):raw_data.index('</dd>') + 5]
-	print(raw_data)
+	# print(raw_data)
 	if 'User:' in raw_data:
 		# print("Checkpoint.\n\n")
 		# return 'User:' + raw_data[raw_data.index('">') + 2:raw_data.index('</a>')]
@@ -494,7 +504,7 @@ def getCreator(raw_data):
 		# While Creator: "My mate in Calcuta" will be stored as just "My mate in calculta"
 		# The script will determine in the method makeCreatorString() whether or not to add back the link based on the presence or absense of this first character.
 	elif '</a>' not in raw_data:
-		print(raw_data)
+		# print(raw_data)
 		return raw_data[raw_data.index('<dd>') + 4:raw_data.index('</dd>')]
 	else:
 		return '???'
@@ -561,7 +571,7 @@ def writeContentString(list_of_featured_item_dicts):
 	ret += '\n' + writeContentStringForFeaturedContentType(list_of_featured_item_dicts, 'Featured list')
 	ret += '\n' + writeContentStringForFeaturedContentType(list_of_featured_item_dicts, 'Featured portal')
 	ret += '\n' + writeContentStringForFeaturedContentType(list_of_featured_item_dicts, 'Featured topic')
-	ret += writeContentStringForFeaturedPicture(list_of_featured_item_dicts) # spare space?
+	ret += '\n' + writeContentStringForFeaturedPicture(list_of_featured_item_dicts) # spare space?
 	ret += '\n\n' + '''{{Wikipedia:Signpost/Template:Signpost-article-comments-end||{{subst:Wikipedia:Wikipedia Signpost/Issue|1}}|{{subst:Wikipedia:Wikipedia Signpost/Issue|4}}}}'''
 	return ret
 

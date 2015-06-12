@@ -39,9 +39,9 @@ By default the script throws the content at my sandbox, "User:Resident Mario/san
 
     run FC-Importer.py -t "Wikipedia:Wikipedia Signpost/2015-06-17/Featured_content
 
-And of course you can combine these two options in one execution:
+And of course you can combine these three options in one execution:
 
-    run FC-Importer.py -p "Wikipedia:Goings-on/March 15, 2015" -d
+    run FC-Importer.py -t "Wikipedia:Wikipedia Signpost/2015-06-17/Featured_content -p "Wikipedia:Goings-on/March 15, 2015" -d
 
 <h2>Limitations</h2>
 
@@ -53,6 +53,7 @@ This script has a number of important limitations that are worth taking into acc
 * Certain kinds of username formatting will cause the script to return garbled output as a page's "nominator". This should be easy to spot and fix manually, and is akin to the '???' that the script returns in other such instances. The difference is that because of peoples' freedom of expression (specifically, freedom to do what they please with their username signatures) there's no obvious way to tell when a username is breaking or being returned incorrectly or not.
 * A known limitation: because of the way that the script is written, a file that has been renamed since its nomination will reliably break the script.
 * A known limitation: because of substandard standardization even by the standards of the featured content processes, to find the nominaters for featured topics and featured portals this script finds and returns the first username that appears on those pages. This will cause it to fail to return the correct (or fully correct) output in cases when there are co-nominators present. Thought the script will be in the right 95% of the time, featured portals and featured topics ought to still be checked by the writers to make sure everything is in the right.
+* The page target has to be in the domain of the Wikipedia Signpost (ae. a subpage of "Wikipedia:Wikipedia Signpost").
 
 <h2>History</h2>
 

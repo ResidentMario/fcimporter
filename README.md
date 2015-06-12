@@ -31,9 +31,13 @@ If you wish to display some additional information during runtime, for debugging
 
 Unfortunately debugging remains poorly implemented, however, and this will not generate as much useful information as it ought to. Beautiful debugging is on the to-do list.
 
-Finally, instead of running on the most recent findable page you can you run on a subpage of your choosing (but be aware of the limitations discussed in the section below). For instance:
+Instead of running on the most recent findable page you can you run on a subpage of your choosing (but be aware of the limitations discussed in the section below). For instance:
 
     run FC-Importer.py -p "Wikipedia:Goings-on/March 2, 2014"
+
+By default the script throws the content at my sandbox, "User:Resident Mario/sandbox", for testing purposes. To have the script splash the proper Signpost subpage instead, use the "-t" parameter:
+
+    run FC-Importer.py -t "Wikipedia:Wikipedia Signpost/2015-06-17/Featured_content
 
 And of course you can combine these two options in one execution:
 

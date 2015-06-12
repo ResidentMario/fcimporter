@@ -19,6 +19,7 @@ log = ""
 # Point it at the weekly FC draft pages, instead of at my sandbox!
 
 # A method to check the command line to see if debugging is enabled. Returns True if it is, False if it isn't.
+# First method that is run at execution.
 def setDebugStatus():
 	for arg in sys.argv[1:]:
 		if arg.startswith(('-d', '-debug')):
@@ -27,7 +28,7 @@ def setDebugStatus():
 	return False
 
 # A method to check the command line to see if a target argument has been provided. Returns either the new target, or resets the base target if none is provided.
-# The base target is 
+# The base target is the most recent subpage of "Wikipedia:Goings-on", set by the helper method getNameOfLatestGOPage().
 def setTargetPage():
 	i = 1
 	while i < len(sys.argv):
@@ -286,7 +287,13 @@ def addFeaturedPictureNomination(featured_picture_item):
 	# print("The same query after stripping the obvious parts: " + str(featured_content_candidate_categories))
 	page_id_key = list(ret.keys())
 	ret = ret[page_id_key[0]]
-	del ret['pageid']
+	# Script will fail at this line (del ret['pageid']) if the file has been renamed post-nomination.
+	# There is no easy solution for this, but it is not a highly relevant issue for a script only intended to be used when nominations are still fresh.
+	try:
+		del ret['pageid']
+	except KeyError:
+		print("FATAL ERROR: Could nor resolve a nomination page for " + featured_picture_item['title'] + ". Was this file renamed recently? Because of the limitations of this script, execution has been stopped.")
+		raise KeyError
 	del ret['title']
 	del ret['ns']
 	ret = ret['fileusage']
@@ -309,7 +316,7 @@ def addFeaturedContentNominators(featured_content_item):
 	list_of_nominators = []
 	if featured_content_item['type'] == 'Featured article' or featured_content_item['type'] == 'Featured list':
 		# FAs/FLs have by far the most consistent nomination scheme for extraction.
-		data = data[data.index('Nominator(s):'):]
+		data = data[data.index('Nominator(s)'):]
 		data = data[:data.index('</dl>') + 25]
 		# print('\n' + data + '\n\n')
 		# +100 to make sure that a space is in the pickup. Having a space isn't as sure a bet as I initially thought; this is a workaround.
@@ -455,7 +462,7 @@ def writeContentStringForFeaturedContentType(list_param, content_type):
 	if len(list_of_stuff) == 0:
 		return ret
 	ret += '===' + content_type + 's===' + '\n'
-	ret += str(len(list_of_stuff)) + ' [[Wikipedia:' + content_type + '|]]s were promoted this week.'
+	ret += '{{ucfirst:{{numtext|' + str(len(list_of_stuff)) + '}}}}' + ' [[Wikipedia:' + content_type + '|]]s were promoted this week.'
 	# for i in range(0, len(list_of_stuff)):
 		# print(str(list_of_stuff[i]))
 	for item in list_of_stuff:
@@ -473,7 +480,7 @@ def writeContentStringForFeaturedPicture(list_param):
 	if len(list_of_stuff) == 0:
 		return ret
 	ret += '===' + 'Featured picture' + 's===' + '\n'
-	ret += str(len(list_of_stuff)) + ' [[Wikipedia:' + 'Featured picture' + '|]]s were promoted this week.'
+	ret += '{{ucfirst:{{numtext|' + str(len(list_of_stuff)) + '}}}}' + ' [[Wikipedia:' + 'Featured pictures' + '|]]s were promoted this week.'
 	# for i in range(0, len(list_of_stuff)):
 		# print(str(list_of_stuff[i]))
 	for item in list_of_stuff:
@@ -488,9 +495,13 @@ def writeContentStringForFeaturedPicture(list_param):
 
 # A method which retrieves the creator of a Featured picture, given raw data from a featured picture nomination.
 def getCreator(raw_data):
-	raw_data = raw_data[raw_data.index('Creator') + 8:]
-	raw_data = raw_data[:raw_data.index('<li>')]
-	raw_data = raw_data[raw_data.index('<dd>'):raw_data.index('</dd>') + 5]
+	# print(raw_data)
+	try:
+		raw_data = raw_data[raw_data.index('Creator') + 8:]
+		raw_data = raw_data[:raw_data.index('<li>')]
+		raw_data = raw_data[raw_data.index('<dd>'):raw_data.index('</dd>') + 5]
+	except ValueError:
+		return '???'
 	# print(raw_data)
 	if 'User:' in raw_data:
 		# print("Checkpoint.\n\n")

@@ -29,20 +29,38 @@ def setDebugStatus():
 
 # A method to check the command line to see if a target argument has been provided. Returns either the new target, or resets the base target if none is provided.
 # The base target is the most recent subpage of "Wikipedia:Goings-on", set by the helper method getNameOfLatestGOPage().
-def setTargetPage():
+def setGOPage():
 	i = 1
 	while i < len(sys.argv):
 		if sys.argv[i].startswith(('-p', '-page')):
 			if sys.argv[i + 1].startswith('Wikipedia:Goings-on'):
 				return sys.argv[i + 1]
 				if debug:
-					print("A command-line argument has changed the target page for this instance of the FC-Importer script to " + sys.argv[i + 1])
+					print("A command-line argument has changed the GO page for this instance of the FC-Importer script to " + sys.argv[i + 1])
 			else:
 				raise NameError("The optional argument '-p' allows you to specify pages besides the base 'Wikipedia:Goings-on' for putting together by the script. However, this argument expects arguments of a specific form: 'python FC-Importer -p Wikipedia:Goings-on/November_2,_2008', for instance. Please make sure your argument conforms to this.")
 		i += 1
 	if debug:
-		print("No page-setting command-line argument has been detected, so the default target page will be used.")
+		print("No page-setting command-line argument has been detected, so the default GO page will be used.")
 	return getNameOfLatestGOPage()
+
+# A method which sets to page that which the content is to be written---the target.
+# For reasons of security and as protection against abuse this is restricted to my sandbox, the default, and to pages within the Signpost domain.
+def setContentTargetPage():
+	i = 1
+	while i < len(sys.argv):
+		if sys.argv[i].startswith(('-t', '-target')):
+			if sys.argv[i + 1].startswith('Wikipedia:Wikipedia Signpost/'):
+				return sys.argv[i + 1]
+				if debug:
+					print("A command-line argument has changed the target page for this instance of the FC-Importer script to " + sys.argv[i + 1])
+			else:
+				raise NameError("The optional argument '-t' allows you to specify pages besides the base (Resident Mario's sandbox) for putting together by the script. However, this argument expects arguments of a specific form: 'python FC-Importer -t Wikipedia:Wikipedia Signpost/Newsroom/Test', for instance. It must always be a page within the Signpost's namespace. Please make sure your argument conforms to this.")
+		i += 1
+	if debug:
+		print("No page-setting command-line argument has been detected, so the default target page will be used.")
+	return 'User:Resident Mario/sandbox'
+
 
 # A method to construct API requests with. Takes a dictionary of request parameters, returns the text of the query.
 # Submethod of more specific submethod requesters used in the script.
@@ -588,7 +606,7 @@ def writeContentString(list_of_featured_item_dicts):
 
 # First step of script execution is setting the debug and target flags, if the user specified alternatives to the defaults.
 debug = setDebugStatus()
-target = setTargetPage()
+target = setGOPage()
 #### print(str(debug))
 #### print(target)
 ### print(newgetFeaturedContentCandidateLinks())
@@ -628,5 +646,5 @@ prettyPrintListOfDicts(featuredContent)
 # prettyPrintListOfDicts(extractFeaturedContentOfOneType(featuredContent, 'Featured pictures'))
 # print(writeContentStringForFeaturedContentType(featuredContent, 'Featured article'))
 to_be_written = writeContentString(featuredContent)
-writePage(to_be_written, 'User:Resident Mario/sandbox')
+writePage(to_be_written, setContentTargetPage())
 print("Done!")

@@ -13,6 +13,12 @@ This script uses the requests library to simplify API request construction and r
 
 <h2>Input</h2>
 
+Running this script directly requires:
+* Installation of Python 3.0 and its availability from the directory in which this script is run.
+* Installation and proper configuration of the pywikibot package and its availability from the directory in which the script is run.
+
+Currently I am running this script manually on my own machine on a weekly basis. I am working on making it available remotely from Wikimedia Labs.
+
 The simplest and most usual way to run the script is to run it without any parameters at all:
 
     run FC-Importer.py

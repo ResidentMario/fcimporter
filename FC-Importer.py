@@ -522,10 +522,15 @@ def getCreator(raw_data):
 		return '???'
 	# print(raw_data)
 	if 'User:' in raw_data:
+		# If there are multiple links in the creator string, at least one pointing to a user and any number of others pointing elsewhere, this loop will initiate.
+		# Since I can't reliably maintain that the output will be correct in this case, in this case the script will return an "unknown" string.
+		if raw_data.count('</a>') > 1:
+			return '???'
+		else:
 		# print("Checkpoint.\n\n")
 		# return 'User:' + raw_data[raw_data.index('">') + 2:raw_data.index('</a>')]
-		ret = raw_data[raw_data.index('title="') + 7:]
-		return ret[:ret.index('">')]
+			ret = raw_data[raw_data.index('title="') + 7:]
+			return ret[:ret.index('">')]
 	elif '/wiki/' in raw_data:
 		return "$" + raw_data[raw_data.index('">') + 2:raw_data.index('</a>')]
 		# The "$" here is a special character which is used by makeCreatorString to figure out whether or not a plaintitled nomination can be linked to or not.
@@ -595,13 +600,18 @@ def writeContentString(list_of_featured_item_dicts):
 ----
 <center>'\'\'\'\'This \'\'Signpost\'\' \"Featured content\" report covers material promoted from START-END MONTH.\'\'\'\''</center>
 ----
-	'''
-	ret += '\n' + writeContentStringForFeaturedContentType(list_of_featured_item_dicts, 'Featured article')
-	ret += '\n' + writeContentStringForFeaturedContentType(list_of_featured_item_dicts, 'Featured list')
+'''
+	ret += "\n<!-- Content initially imported from '" + target + "' via Resident Mario's FC-Importer script. -->" 
+	ret += '\n' + '[[File:Foo.jpg|thumb|300px|Caption of first FA to display]] <!--Repeat as appropriate-->' + '\n' + writeContentStringForFeaturedContentType(list_of_featured_item_dicts, 'Featured article')
+	ret += '\n' + '[[File:Foo.jpg|thumb|300px|Caption of first FL to display]] <!--Repeat as appropriate-->' + '\n' + writeContentStringForFeaturedContentType(list_of_featured_item_dicts, 'Featured list')
 	ret += '\n' + writeContentStringForFeaturedContentType(list_of_featured_item_dicts, 'Featured portal')
 	ret += '\n' + writeContentStringForFeaturedContentType(list_of_featured_item_dicts, 'Featured topic')
-	ret += '\n' + writeContentStringForFeaturedPicture(list_of_featured_item_dicts) # spare space?
-	ret += '\n\n' + '''{{Wikipedia:Signpost/Template:Signpost-article-comments-end||{{subst:Wikipedia:Wikipedia Signpost/Issue|1}}|{{subst:Wikipedia:Wikipedia Signpost/Issue|4}}}}'''
+	ret += '\n'  + '[[File:Foo.jpg|thumb|300px|Caption of first FP to display]] <!--Repeat as appropriate-->' + '\n' + writeContentStringForFeaturedPicture(list_of_featured_item_dicts) # spare space?
+	ret += '\n\n' + '''
+	[[File:bar.jpg|thumb|600px|center|Footer image caption. Tweak width as appropriate]]
+
+	{{Wikipedia:Signpost/Template:Signpost-article-comments-end||{{subst:Wikipedia:Wikipedia Signpost/Issue|1}}|{{subst:Wikipedia:Wikipedia Signpost/Issue|4}}}}
+	'''
 	return ret
 
 # First step of script execution is setting the debug and target flags, if the user specified alternatives to the defaults.

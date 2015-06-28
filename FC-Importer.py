@@ -480,6 +480,10 @@ def writeContentStringForFeaturedContentType(list_param, content_type):
 	if len(list_of_stuff) == 0:
 		return ret
 	ret += '===' + content_type + 's===' + '\n'
+	if list_of_stuff[0]['type'] == 'Featured article':
+		ret += '\n' + '[[File:Foo.jpg|thumb|300px|Caption of first FA to display]] <!--Repeat as appropriate-->' + '\n' 
+	else: # Featured list case.
+		ret += '\n' + '[[File:Foo.jpg|thumb|300px|Caption of first FL to display]] <!--Repeat as appropriate-->' + '\n' 
 	ret += '{{ucfirst:{{numtext|' + str(len(list_of_stuff)) + '}}}}' + ' [[Wikipedia:' + content_type + '|]]s were promoted this week.'
 	# for i in range(0, len(list_of_stuff)):
 		# print(str(list_of_stuff[i]))
@@ -498,6 +502,7 @@ def writeContentStringForFeaturedPicture(list_param):
 	if len(list_of_stuff) == 0:
 		return ret
 	ret += '===' + 'Featured picture' + 's===' + '\n'
+	ret += '[[File:Foo.jpg|thumb|300px|Caption of first FP to display]] <!--Repeat as appropriate-->\n'
 	ret += '{{ucfirst:{{numtext|' + str(len(list_of_stuff)) + '}}}}' + ' [[Wikipedia:' + 'Featured pictures' + '|]]s were promoted this week.'
 	# for i in range(0, len(list_of_stuff)):
 		# print(str(list_of_stuff[i]))
@@ -590,8 +595,8 @@ def removeUnderscoresFromUsername(name):
 # A method which creates a write-string to be passed to writePage() for writing at the end of this script's execution.
 # Returns the formatted wiki-content string.
 def writeContentString(list_of_featured_item_dicts):
-	ret = '''
-{{Signpost draft}}{{Wikipedia:Signpost/Template:Signpost-header|||}}
+	ret = '''{{Signpost draft}}
+<noinclude>{{Wikipedia:Signpost/Template:Signpost-header|||}}</noinclude>
 
 {{Wikipedia:Signpost/Template:Signpost-article-start|{{{1|(Your article's descriptive subtitle here)}}}|By [[User:{{subst:REVISIONUSER}}|]]| {{subst:#time:j F Y|{{subst:Wikipedia:Wikipedia Signpost/Issue|4}}}}}}
 
@@ -602,16 +607,17 @@ def writeContentString(list_of_featured_item_dicts):
 ----
 '''
 	ret += "\n<!-- Content initially imported from '" + target + "' via Resident Mario's FC-Importer script. -->" 
-	ret += '\n' + '[[File:Foo.jpg|thumb|300px|Caption of first FA to display]] <!--Repeat as appropriate-->' + '\n' + writeContentStringForFeaturedContentType(list_of_featured_item_dicts, 'Featured article')
-	ret += '\n' + '[[File:Foo.jpg|thumb|300px|Caption of first FL to display]] <!--Repeat as appropriate-->' + '\n' + writeContentStringForFeaturedContentType(list_of_featured_item_dicts, 'Featured list')
+	ret += '\n' + '' + '\n' + writeContentStringForFeaturedContentType(list_of_featured_item_dicts, 'Featured article')
+	ret += '\n' + '' + '\n' + writeContentStringForFeaturedContentType(list_of_featured_item_dicts, 'Featured list')
 	ret += '\n' + writeContentStringForFeaturedContentType(list_of_featured_item_dicts, 'Featured portal')
 	ret += '\n' + writeContentStringForFeaturedContentType(list_of_featured_item_dicts, 'Featured topic')
-	ret += '\n'  + '[[File:Foo.jpg|thumb|300px|Caption of first FP to display]] <!--Repeat as appropriate-->' + '\n' + writeContentStringForFeaturedPicture(list_of_featured_item_dicts) # spare space?
+	ret += '\n' + '' + writeContentStringForFeaturedPicture(list_of_featured_item_dicts)
+	# For reasons unknown to me removing the empty string ('') in the lines above causes consistent key error failures.
 	ret += '\n\n' + '''
-	[[File:bar.jpg|thumb|600px|center|Footer image caption. Tweak width as appropriate]]
+{{-}}
+[[File:bar.jpg|thumb|600px|center|Footer image caption. Tweak width as appropriate]]
 
-	{{Wikipedia:Signpost/Template:Signpost-article-comments-end||{{subst:Wikipedia:Wikipedia Signpost/Issue|1}}|{{subst:Wikipedia:Wikipedia Signpost/Issue|4}}}}
-	'''
+<noinclude>{{Wikipedia:Signpost/Template:Signpost-article-comments-end||{{subst:Wikipedia:Wikipedia Signpost/Issue|1}}|{{subst:Wikipedia:Wikipedia Signpost/Issue|4}}}}</noinclude>'''
 	return ret
 
 # First step of script execution is setting the debug and target flags, if the user specified alternatives to the defaults.

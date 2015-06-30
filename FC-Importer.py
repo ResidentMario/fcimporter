@@ -1,3 +1,8 @@
+# FC-Importer.py
+# This script handles tedius setup tasks for the featured content report section of the Wikipedia Signpost.
+# The bulk of this script was written over the course of a few days of labor in early June 2015.
+# With >550 lines of code it sufficiently complicated to be very difficult to maintain.
+
 import pywikibot
 import sys
 import requests
@@ -8,7 +13,7 @@ import signpostlib
 # Target page. Usually this will be WP:GO, the latest GO page, but for testing purposes a capacity exists for running against older ones as well.
 target = "Wikipedia:Goings-on"
 
-# A method to check the command line to see if a target argument has been provided. Returns either the new target, or resets the base target if none is provided.
+# RUNTIME SETTER METHOD: A method to check the command line to see if a target argument has been provided. Returns either the new target, or resets the base target if none is provided.
 # The base target is the most recent subpage of "Wikipedia:Goings-on", set by the helper method getNameOfLatestGOPage().
 def setGOPage():
 	i = 1
@@ -21,31 +26,30 @@ def setGOPage():
 		i += 1
 	return getNameOfLatestGOPage()
 
-# A method which sets to page that which the content is to be written---the target.
-# For reasons of security and as protection against abuse this is restricted to my sandbox, the default, and to pages within the Signpost domain.
+# RUNTIME SETTER METHOD: A method which sets to page that which the content is to be written---the target.
+#  This method is restricted to my own namespace and to pages within the Signpost domain.
 def setContentTargetPage():
 	i = 1
 	while i < len(sys.argv):
 		if sys.argv[i].startswith(('-t', '-target')):
-			if sys.argv[i + 1].startswith('Wikipedia:Wikipedia Signpost/'):
+			if sys.argv[i + 1].startswith('Wikipedia:Wikipedia Signpost/') or sys.argv[i + 1].startswith('User:Resident Mario/'):
 				return sys.argv[i + 1]
 			else:
 				raise NameError("The optional argument '-t' allows you to specify pages besides the base (Resident Mario's sandbox) for putting together by the script. However, this argument expects arguments of a specific form: 'python FC-Importer -t Wikipedia:Wikipedia Signpost/Newsroom/Test', for instance. It must always be a page within the Signpost's namespace. Please make sure your argument conforms to this.")
 		i += 1
 	return signpostlib.getNextSignpostPublicationString() + '/Featured content'
 
-
-# A method to construct API requests with. Takes a dictionary of request parameters, returns the text of the query.
+# API EXECUTION METHOD: A method to construct API requests with. Takes a dictionary of request parameters, returns the text of the query.
 # Submethod of more specific submethod requesters used in the script.
 # This method uses the requests library to handle concatenating the API request string and actually retrieving the data.
 def requestData(api_request_parameters):
 	r = requests.get("https://en.wikipedia.org/w/api.php?", params=api_request_parameters)
 	return json.loads(r.text)
 
-# A helper method which strips API data to get to the "core". The API is poorly designed, IMO, and you have to tunnel through a lot of junk to get at the actual data of interest.
+# API EXECUTION HELPER METHOD: A helper method which strips API data to get to the "core". The API is poorly designed, IMO, and you have to tunnel through a lot of junk to get at the actual data of interest.
 # This method is meant to be called on the results of a requestData() call.
 # It takes two parameters. One is the query, the other is the type of data being requested (for passing through the final layer).
-# TODO: Lace this method through everywhere for the purposes of maintainability.
+# NOTE: I did not learn until after this script was already written that a `formatversion=2` parameter exists to make this significantly easier to do, by fixing the aforementioned problem.
 def stripAPIData(query, type):
 	query = query['query']
 	query = query['pages']
@@ -54,7 +58,7 @@ def stripAPIData(query, type):
 	query = query[type]
 	return query
 
-# A method which uses the requestData method to get a list of links from the Goings-on page.
+# API EXECUTION METHOD: A method which uses the requestData method to get a list of links from the Goings-on page.
 # This method is used to get all of the featured articles, lists, portals, and pictures. It does not retrieve featured topics, which must be gotten more hackily.
 # This is because featured topics are in the "Wikipedia" namespace, the results for which are buried under the torrent of links to other WP:GO pages present in the template at the foot of the page.
 # Featured topic candidates are instead retrieved directly via scrubbing the raw HTML.
@@ -63,7 +67,7 @@ def getFeaturedContentCandidateLinks():
 	links_dictionary = stripAPIData(requestData(api_request_parameters), 'links')
 	return links_dictionary
 
-# A method which gets the raw page data from the Goings-on page and filter it for featured articles.
+# API EXECUTION METHOD: A method which gets the raw page data from the Goings-on page and filter it for featured articles.
 # Used to retrieve the featured topics. This is done seperately from the more efficient procedure for getting the other types of featured content off the page for reasons described in the notes to the method getFeaturedContentCandidateLinks().
 # Returns a list of dictionary pairs of featured topics.
 def getGOData():
@@ -72,8 +76,7 @@ def getGOData():
 	data = requests.get(page)
 	return data
 
-# A method which, given the raw page, returns a dictionary pair list of featured topics on that page. Implements getGOData().
-# TODO: Investigate whether or not there is a better way of doing this.
+# API EXECUTION METHOD: A method which, given the raw page, returns a dictionary pair list of featured topics on that page. Implements getGOData().
 def getFeaturedTopicsList():
 	r = getGOData()
 	ret = []
@@ -86,10 +89,9 @@ def getFeaturedTopicsList():
 		data = {"ns": 4, "title": stripped_data[stripped_data.index("\">") + 2 : stripped_data.index("</a>")]}
 		stripped_data = stripped_data[stripped_data.index("<li>") + 4:]
 		ret.append(data)
-		# TODO: Check that this works when there are multiple featured topic promotions.
 	return ret
 
-# A method which, given a {"ns": "#", "title:" "article_title"} dictionary pair, tests to see if that page is an item of featured content.
+# DICTIONARY EXECUTION METHOD: A method which, given a {"ns": "#", "title:" "article_title"} dictionary pair, tests to see if that page is an item of featured content.
 # If it is not it returns an empty dict.
 # If it is it then checks the item's featured content type.
 # It returns this as a new quadruple, {"ns": "#", "title": "article_title", "pageid": "####", type": "article_type"}
@@ -117,19 +119,14 @@ def checkFeaturedContentCandidate(candidate_pair_dict):
 		ret = featured_topic_candidate_categories
 		ret['type'] = 'Featured topic'
 		del ret['pageid']
-		# print(page_id_key)
-		# print(featured_topic_candidate_categories)
 	# A loop to check featured articles and lists, and differenciating between them.
 	elif candidate_pair_dict['ns'] == 0:
 		# First, request the categories assigned to the article using the API, conditioning on that only the featured article and featured list categories are to return.
 		api_request_parameters = {'action': 'query', 'prop': 'categories', 'titles': ret['title'], 'clcategories': 'Category:Featured lists|Category:Featured articles', 'format': 'json'}
 		featured_content_candidate_categories = requestData(api_request_parameters)
 		# Second, strip the data that has been returned to its bare essentials.
-		# print("Featured article or list candidate: " + ret['title'])
-		# print("Result of a query for the featured article or list candidate's categories: " + str(featured_content_candidate_categories))
 		featured_content_candidate_categories = featured_content_candidate_categories['query']
 		featured_content_candidate_categories = featured_content_candidate_categories['pages']
-		# print("The same query after stripping the obvious parts: " + str(featured_content_candidate_categories))
 		page_id_key = list(featured_content_candidate_categories.keys())
 		featured_content_candidate_categories = featured_content_candidate_categories[page_id_key[0]]
 		del featured_content_candidate_categories['pageid']
@@ -147,9 +144,7 @@ def checkFeaturedContentCandidate(candidate_pair_dict):
 		if len(list(featured_content_candidate_categories.keys())) == 0:
 			return {}
 		# Now let's correct that doubling.
-		# print("Checkpoint.")
 		ret['categories'] = ret['categories']['categories']
-		# print("The contents of ret after checking it isn't empty and removing the redunandcy if it isn't: " + str(ret))
 		# Now we need to figure out whether it's a featured article or a featured list---or neither!
 		# Use the info in categories to test article type.
 		if ret['categories'][0]['title'] == "Category:Featured articles":
@@ -162,48 +157,40 @@ def checkFeaturedContentCandidate(candidate_pair_dict):
 			ret['type'] = 'Featured picture'
 	elif candidate_pair_dict['ns'] == 100:
 		# Manually parse out Portal:Contents
-		# TODO: Fix this; for some reason it's not picking it up.
 		if candidate_pair_dict['title'] == 'Portal:Contents':
 			return {}
 		else:
 			ret['type'] = 'Featured portal'
 	return ret
 
-# A method which returns a basic list of featured content, broken up by title, namespace, and type.
+# DICTIONARY EXECUTION METHOD: A method which returns a basic list of featured content, broken up by title, namespace, and type.
 # Implements getFeaturedContentCandidateLinks(), getFeaturedTopicsList() to build a basic list of candidates.
 # Then it runs each candidate through checkFeaturedContentCandidate() to remove false positives and to add data about type.
 # It returns a list of dicts of the form [{'title': 'article_title', 'ns': '#', 'type': 'Featured article'}, {...}, ...]
 def getFeaturedContent():
 	print("Getting non-topic featured content candidates...")
 	featured_content_candidates = getFeaturedContentCandidateLinks()
-	# print("Checkpoint 2.")
 	print("Adding topic featured content candidates...")
 	featured_content_candidates.extend(getFeaturedTopicsList())
-	# print("Checkpoint 3.")
 	print("Removing non-featured content from candidates list and adding featured status classes...")
 	i = 0
 	while i < len(featured_content_candidates):
-		# print("Now checking the legitimacy of the following: " + str(featured_content_candidates[i]))
 		item = checkFeaturedContentCandidate(featured_content_candidates[i])
-		# print("Result of this check: " + str(item))
 		if len(list(item.keys())) != 0:
 			featured_content_candidates[i] = item
 		else:
 			featured_content_candidates.pop(i)
 			i -= 1
 		i += 1
-	# print("Checkpoint 4.")
 	return featured_content_candidates
 
-# A method which takes as an input a dict of the form {'title': 'article_title', 'ns': '#', 'type': 'Featured article'}.
+# DICTIONARY EXECUTION METHOD: A method which takes as an input a dict of the form {'title': 'article_title', 'ns': '#', 'type': 'Featured article'}.
 # It then searchs for the content's nomination page and attached new data to the dict: the nomination page and the nominator.
 # It returns a dict of the form {'title': 'article_title', 'ns': '#', 'type': 'Featured article', 'nomination': 'nomination_page', 'nominators:': [userOne, userTwo, ...]}
 def addLatestFeaturedContentNomination(featured_content_item):
-	# print("Featured content item: " + str(featured_content_item))
 	if featured_content_item['type'] == 'Featured article' or featured_content_item['type'] == 'Featured list':
 		api_request_parameters = {'action': 'query', 'prop': 'links', 'titles': 'Talk:' + featured_content_item['title'], 'pltitles': createFeaturedCandidacyPageLinkChecklist(featured_content_item), 'format': 'json', 'pllimit': '500'}
 	elif featured_content_item['type'] == 'Featured topic':
-		# print("Contents of featured_content_item: " + str(featured_content_item))
 		api_request_parameters = {'action': 'query', 'prop': 'links', 'titles': 'Wikipedia talk:Featured topics/' + featured_content_item['title'][featured_content_item['title'].index('/') + 1:], 'pltitles': createFeaturedCandidacyPageLinkChecklist(featured_content_item), 'format': 'json', 'pllimit': '500'}
 	elif featured_content_item['type'] == 'Featured portal':
 		api_request_parameters = {'action': 'query', 'prop': 'links', 'titles': 'Portal talk:' + featured_content_item['title'][featured_content_item['title'].index(':') + 1:], 'pltitles': createFeaturedCandidacyPageLinkChecklist(featured_content_item), 'format': 'json', 'pllimit': '500'}
@@ -215,15 +202,13 @@ def addLatestFeaturedContentNomination(featured_content_item):
 	nomination_pages = nomination_pages['pages']
 	page_id_key = list(nomination_pages.keys())
 	nomination_pages = nomination_pages[page_id_key[0]]
-	# print("Nominations page: " + str(nomination_pages))
 	del nomination_pages['title'], nomination_pages['ns'], nomination_pages['pageid']
 	nomination_pages = nomination_pages['links']
-	# print("Nomination pages: " + str(nomination_pages))
 	latest_nomination_page = nomination_pages[len(nomination_pages) - 1]['title']
 	featured_content_item['nomination'] = latest_nomination_page
 	return featured_content_item
 
-# A submethod of getFeaturedContentNominationData which is used to generate and format the list of links to be checked which is sent to the API in the 'pltitles' parameter.
+# DICTIONARY EXECUTION METHOD: A submethod of getFeaturedContentNominationData which is used to generate and format the list of links to be checked which is sent to the API in the 'pltitles' parameter.
 # Takes as an input a dict of the form {'title': 'article_title', 'ns': '#', 'type': 'Featured article'}.
 # Returns a string of the form 'Wikipedia:Featured article candidates/Hydrogen/archive1|Wikipedia:Featured article candidates/Hydrogen/archive2|...'
 # Ten archive links are generated for checking.
@@ -243,7 +228,6 @@ def createFeaturedCandidacyPageLinkChecklist(featured_content_item):
 	elif featured_content_item['type'] == 'Featured topic':
 		for n in range(1, 11):
 			ret += "Wikipedia:Featured topic candidates/" + featured_content_item['title'][featured_content_item['title'].index('/') + 1:] + "/archive" + str(n) + "|"
-			# print("Featured topic ret string: " + ret)
 	elif featured_content_item['type'] == 'Featured picture':
 		# There is no consistent formatting for featured picture nominations, which are nominated with any one of three titles, none normalized.
 		# The first is with the filename. This we can check.
@@ -257,7 +241,7 @@ def createFeaturedCandidacyPageLinkChecklist(featured_content_item):
 	ret = ret[0:len(ret) - 1]
 	return ret
 
-# A method which takes an input of a dict in the form {'title': 'article_title', 'ns': '6', 'type': 'Featured picture'}.
+# DICTIONARY EXECUTION METHOD: A method which takes an input of a dict in the form {'title': 'article_title', 'ns': '6', 'type': 'Featured picture'}.
 # It then discovers and attaches to this dict the featured picture's nomination page.
 # This is written seperately from the rest of the loop present in addLatestFeaturedContentNomination, which calls this method.
 # Featured pictures are a particularly difficult item to get through, and so call for special attention.
@@ -271,7 +255,6 @@ def addFeaturedPictureNomination(featured_picture_item):
 	ret = requestData(api_request_parameters)
 	ret = ret['query']
 	ret = ret['pages']
-	# print("The same query after stripping the obvious parts: " + str(featured_content_candidate_categories))
 	page_id_key = list(ret.keys())
 	ret = ret[page_id_key[0]]
 	# Script will fail at this line (del ret['pageid']) if the file has been renamed post-nomination.
@@ -295,7 +278,7 @@ def addFeaturedPictureNomination(featured_picture_item):
 	ret = ret[len(ret) - 1]['title']
 	return ret
 
-# A method which takes as an input a dict of the form {'title': 'article_title', 'ns': '#', 'type': 'Featured article', 'nomination': 'Wikipedia:Featured article candidates/article_title/archiveN'}.
+# DICTIONARY EXECUTION METHOD: A method which takes as an input a dict of the form `{'title': 'article_title', 'ns': '#', 'type': 'Featured article', 'nomination': 'Wikipedia:Featured article candidates/article_title/archiveN'}`.
 # It then carves out the names of the content nominators. It does this by isolating the segment of data where the interesting users occur, and then sending it to getListOfUniqueUsersFromData().
 def addFeaturedContentNominators(featured_content_item):
 	data = requests.get('https://en.wikipedia.org/wiki/' + featured_content_item['nomination']).text
@@ -305,7 +288,6 @@ def addFeaturedContentNominators(featured_content_item):
 		# FAs/FLs have by far the most consistent nomination scheme for extraction.
 		data = data[data.index('Nominator(s)'):]
 		data = data[:data.index('</dl>') + 25]
-		# print('\n' + data + '\n\n')
 		# +100 to make sure that a space is in the pickup. Having a space isn't as sure a bet as I initially thought; this is a workaround.
 		list_of_nominators = []
 		list_of_nominators = getListOfUniqueUsersFromData(data)
@@ -318,7 +300,6 @@ def addFeaturedContentNominators(featured_content_item):
 		# Since there's no way to check co-nominations, whatever! Latitude of the FC writer.
 		list_of_nominators = [getListOfUniqueUsersFromData(data)[0]]
 	if featured_content_item['type'] == 'Featured picture':
-		# print("Checkpoint: in the FP loop.")
 		# Features pictures need to have two fields of information, one for the nominator and one for the creator.
 		# Thus we are actually passing two different fields in the case of featured pictures.
 		# Both are fairly easily distinguishable, however.
@@ -330,35 +311,10 @@ def addFeaturedContentNominators(featured_content_item):
 			print("WARNING: " + featured_content_item['title'] + " is missing the 'Support as nominator' string, necessary for finding the FP's nominators. This step is being skipped in this case, and will have to be filled in manually.")
 			featured_content_item['nominators'] = ['']
 			return featured_content_item
-		# print(list_of_nominators_raw)
 		list_of_nominators_raw = list_of_nominators_raw[:list_of_nominators_raw.index('</li>') + 25]
-		# print("Data inside of test: " + list_of_nominators_raw)
 		list_of_nominators = getListOfUniqueUsersFromData(list_of_nominators_raw)
-		# print(list_of_nominators)
-		# Creator is a free-form field so it can be a little more difficult.
-		# list_of_creators_raw = data[data.index('Creator'):]
-		# list_of_creators_raw = list_of_creators_raw[:list_of_creators_raw.index('</a>')]
-		# print(list_of_creators_raw)
-		#  = getListOfUniqueUsersFromData(list_of_creators_raw)
-		# print(list_of_creators)
-		# pass
 	featured_content_item['nominators'] = list_of_nominators
-	# print(str(featured_content_item))
 	return featured_content_item
-
-# Pretty printer method for lists containing dicts.
-# Useful for debugging: makes the output easier to read.
-def prettyPrintListOfDicts(list_of_dicts):
-	for list_item in list_of_dicts:
-		print("{")
-		for dict_item in list(list_item.keys()):
-			print(" " + str(dict_item) + ": " + str(list_item[dict_item]))
-		print("}")
-
-# def prettyPrintSingleDict(dict_to_print):
-#	print("{")
-#	for item in list(dict_to_print.keys()):
-#		print("}")
 
 # A method which returns a list of users, given a bunch of data containing, amongst other things, users.
 # After isolating the area on a page where usernames of interest appear, this method is called to extract them.
@@ -368,8 +324,6 @@ def prettyPrintListOfDicts(list_of_dicts):
 def getListOfUniqueUsersFromData(data):
 	ret = []
 	# Populate the list.
-	# print("\nData:\n\n " + data + "\n\n")
-	# print("Is User: in data at the start? " + 'User:' in data)
 	while 'User:' in data:
 		p = data[data.index('User:'):]
 		p = p[:p.index(' ') - 1]
@@ -386,22 +340,20 @@ def getListOfUniqueUsersFromData(data):
 			ret.remove(user)
 	return ret
 
-# A method which returns the most recent WP:GO subpage, the one that is to be used by the featured content report.
+# API HELPER METHOD: A method which returns the most recent WP:GO subpage, the one that is to be used by the featured content report.
 def getNameOfLatestGOPage():
 	api_request_parameters = {'action': 'query', 'titles': makeStringOfGOPageCandidates(), 'format': 'json'}
 	latest_go_page_candidates = requestData(api_request_parameters)
 	# Because this particular query returns a list, it must be stripped differently than the other API queries I have used so far.
 	# I have written this stipping procedure into this method manually.
 	latest_go_page_candidates = latest_go_page_candidates['query']['pages']
-	# print(latest_go_page_candidates)
 	for item in list(latest_go_page_candidates.keys()):
-		# print(item)
 		if int(item) > 0:
 			return latest_go_page_candidates[item]['title']
 	# If you reach this point the method fell through, and couldn't find the most recent GO page. This breaks execution.
 	return Exception("The most recent archived Wikipedia:Goings-on page could not be found.")
 
-# A method which makes a string of GO page candidates by taking today's date and then extrapolating fourteen days back.
+# API HELPER METHOD: A method which makes a string of GO page candidates by taking today's date and then extrapolating fourteen days back.
 def makeStringOfGOPageCandidates():
 	ret = ''
 	pythonic_date = datetime.date.today()
@@ -413,15 +365,7 @@ def makeStringOfGOPageCandidates():
 	ret = ret[0:len(ret) - 1]
 	return ret
 
-# A method which uses the pywikibot framework to write content to a page.
-def writePage(content, page_to_write_to):
-	site = pywikibot.Site()
-	page = pywikibot.Page(site, page_to_write_to)
-	text = page.text
-	page.text = content
-	page.save(u"FC Importer script test.")
-
-# An extraction method that returns a list of dicts associated with one specific featured content type.
+# DICTIONARY HELPER METHOD: An extraction method that returns a list of dicts associated with one specific featured content type.
 # This is used to de-glob the work that needs to be done in generating the output string.
 def extractFeaturedContentOfOneType(list_param, content_type):
 	ret = []
@@ -430,7 +374,7 @@ def extractFeaturedContentOfOneType(list_param, content_type):
 			ret.append(list_param[i])
 	return ret
 
-# Strips content before colons and slashes out of a string. Used as a text transform in writeContentStringForFeaturedContentType().
+# DICTIONARY HELPER METHOD: Strips content before colons and slashes out of a string. Used as a text transform in writeContentStringForFeaturedContentType().
 # Used to generate a link, so that we can get the simplest linking possible: either [[James Franco|]], not [[James Franco|James Franco]].
 # And [[Wikipedia:Featured topics/Overview of Lorde|Overview of Lorde]], not [[Wikipedia:Featured topics/Overview of Lorde|Featured topics/Overview of Lorde]].
 def stripSubpage(string):
@@ -440,7 +384,7 @@ def stripSubpage(string):
 		string = string[string.index('/') + 1:]
 	return string
 
-# A method which returns the FC report section of a particular content type.
+# DICTIONARY SUB-EXECUTION METHOD: Returns the FC report section of a particular content type.
 # Uses extractFeaturedContentOfOneType() to generate the list of promoted content of that type, and then iterates through it.
 # Returns a content string.
 def writeContentStringForFeaturedContentType(list_param, content_type):
@@ -454,15 +398,12 @@ def writeContentStringForFeaturedContentType(list_param, content_type):
 	else: # Featured list case.
 		ret += '\n' + '[[File:Foo.jpg|thumb|300px|Caption of first FL to display]] <!--Repeat as appropriate-->' + '\n' 
 	ret += '{{ucfirst:{{numtext|' + str(len(list_of_stuff)) + '}}}}' + ' [[Wikipedia:' + content_type + '|]]s were promoted this week.'
-	# for i in range(0, len(list_of_stuff)):
-		# print(str(list_of_stuff[i]))
 	for item in list_of_stuff:
 		ret += '\n* <b>' + '[[:' + item['title'] + '|' + stripSubpage(item['title']) + ']]</b> <small>\'\'('
 		ret += '[[' + item['nomination'] + '|nominated]] by ' + makeContributorsStringFromList(item['nominators']) + ')\'\'</small> '
-		# print(str(item))
 	return ret
 
-# A method that does the same as the above, but is special to featured pictures, which must provide two more things:
+# DICTIONARY SUB-EXECUTION METHOD: A method that does the same as the above, but is special to featured pictures, which must provide two more things:
 # 1. A creator.
 # 2. Check the string to see if it contains File:, if not then use that string as the description instead of the filename.
 def writeContentStringForFeaturedPicture(list_param):
@@ -473,36 +414,28 @@ def writeContentStringForFeaturedPicture(list_param):
 	ret += '===' + 'Featured picture' + 's===' + '\n'
 	ret += '[[File:Foo.jpg|thumb|300px|Caption of first FP to display]] <!--Repeat as appropriate-->\n'
 	ret += '{{ucfirst:{{numtext|' + str(len(list_of_stuff)) + '}}}}' + ' [[Wikipedia:' + 'Featured pictures' + '|]]s were promoted this week.'
-	# for i in range(0, len(list_of_stuff)):
-		# print(str(list_of_stuff[i]))
 	for item in list_of_stuff:
 		if 'File:' in item['nomination']:
 			ret += '\n* <b>' + '[[:' + item['title'] + ']]</b> <small>\'\'('
 		else:
 			ret += '\n* <b>' + '[[:' + item['title'] + '|' + item['nomination'][item['nomination'].index('/') + 1:] + ']]</b> <small>\'\'('
 		ret += 'created by ' + makeCreatorString(item['creator']) + '; ' + '[[' + item['nomination'] + '|nominated]] by ' + makeContributorsStringFromList(item['nominators']) + ')\'\'</small> '
-#		ret += '[[' + item['nomination'] + '|nominated]] by ' + makeContributorsStringFromList(item['nominators']) + ')\'\'</small> '
-		# print(str(item))
 	return ret
 
-# A method which retrieves the creator of a Featured picture, given raw data from a featured picture nomination.
+# DICTIONARY SUB-EXECUTION METHOD: A method which retrieves the creator of a Featured picture, given the raw HTML data of a featured picture nomination.
 def getCreator(raw_data):
-	# print(raw_data)
 	try:
 		raw_data = raw_data[raw_data.index('Creator') + 8:]
 		raw_data = raw_data[:raw_data.index('<li>')]
 		raw_data = raw_data[raw_data.index('<dd>'):raw_data.index('</dd>') + 5]
 	except ValueError:
 		return '???'
-	# print(raw_data)
 	if 'User:' in raw_data:
 		# If there are multiple links in the creator string, at least one pointing to a user and any number of others pointing elsewhere, this loop will initiate.
 		# Since I can't reliably maintain that the output will be correct in this case, in this case the script will return an "unknown" string.
 		if raw_data.count('</a>') > 1:
 			return '???'
 		else:
-		# print("Checkpoint.\n\n")
-		# return 'User:' + raw_data[raw_data.index('">') + 2:raw_data.index('</a>')]
 			ret = raw_data[raw_data.index('title="') + 7:]
 			return ret[:ret.index('">')]
 	elif '/wiki/' in raw_data:
@@ -512,11 +445,11 @@ def getCreator(raw_data):
 		# While Creator: "My mate in Calcuta" will be stored as just "My mate in calculta"
 		# The script will determine in the method makeCreatorString() whether or not to add back the link based on the presence or absense of this first character.
 	elif '</a>' not in raw_data:
-		# print(raw_data)
 		return raw_data[raw_data.index('<dd>') + 4:raw_data.index('</dd>')]
 	else:
 		return '???'
 
+# CONTENT HELPER METHOD: Parses a linked creator string and returns it properly formatted based on the presence or absense of the magic character `$` and of the string `User`.
 def makeCreatorString(creator):
 	if 'User:' in creator:
 		return '[[' + creator + '|]]'
@@ -525,7 +458,7 @@ def makeCreatorString(creator):
 	else:
 		return creator
 
-# A method which returns a string of contributors, formatted for FC, given a list of contributors.
+# CONNTENT HELPER METHOD: Converts a list of contributors into a contribution string formatted for inclusion in FRC.
 def makeContributorsStringFromList(list_param):
 	for i in range(0, len(list_param)):
 		list_param[i] = removeUnderscoresFromUsername(list_param[i])
@@ -545,14 +478,14 @@ def makeContributorsStringFromList(list_param):
 		ret = '???'
 	return ret
 
-# A method which removes the red-linking string in a username.
+# CONTENT HELPER METHOD: Removes red-linking strings in a username ahead of the link's conversion to wikicode.
 def removeRedLinkedUsernames(name):
 	ret = name
 	if '&amp;action=edit&amp;redlink=1' in ret:
 		ret = ret[0:ret.index('&amp;action=edit&amp;redlink=1')]
 	return ret
 
-# A helper method which removes underscores ('_') betwixt usernames. Care must be taken not to take away leading or trailing underscores.
+# CONTENT HELPER METHOD: Removes underscores ('_') from amongst usernames. Care must be taken not to take away leading or trailing underscores; hence the relative complexity.
 def removeUnderscoresFromUsername(name):
 	ret = name
 	if '_' in name:
@@ -561,8 +494,7 @@ def removeUnderscoresFromUsername(name):
 				ret = ret[0:i] + ' ' + ret[i + 1:len(name)]
 	return ret
 
-# A method which creates a write-string to be passed to writePage() for writing at the end of this script's execution.
-# Returns the formatted wiki-content string.
+# RUNTIME METHOD: Generates the content string that will be written to the page at the end of this script's running time.
 def writeContentString(list_of_featured_item_dicts):
 	ret = '''{{Signpost draft}}
 <noinclude>{{Wikipedia:Signpost/Template:Signpost-header|||}}</noinclude>
@@ -589,7 +521,6 @@ def writeContentString(list_of_featured_item_dicts):
 <noinclude>{{Wikipedia:Signpost/Template:Signpost-article-comments-end||{{subst:Wikipedia:Wikipedia Signpost/Issue|1}}|{{subst:Wikipedia:Wikipedia Signpost/Issue|4}}}}</noinclude>'''
 	return ret
 
-
 ##################
 # RUNTIME SCRIPT #
 ##################
@@ -601,9 +532,10 @@ for item in featuredContent:
 print("Adding nominator information to featured content list dictionaries...")
 for item in featuredContent:
 	item = addFeaturedContentNominators(item)
-prettyPrintListOfDicts(featuredContent)
+# signpostlib.prettyPrintQuery(featuredContent)
 to_be_written = writeContentString(featuredContent)
-writePage(to_be_written, setContentTargetPage())
+content_target = setContentTargetPage()
+signpostlib.saveContentToPage(to_be_written, content_target, 'Importing basic Featured Content report via the [https://github.com/ResidentMario/FC-Importer FC_Importer] script.')
 print("Done!")
 
 ##############

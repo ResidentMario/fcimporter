@@ -1,5 +1,5 @@
+# signpostlib.py
 # This library provides a loose collection of methods useful for tasks associated with the Wikipedia Signpost.
-
 # Prerequisites to using this library:
 # You must have the `pywikibot` package installed and set up.
 # Furthermore it is recommended that you edit `user_config.py` directly to contain as many global definitions as possible, ae.:
@@ -121,9 +121,12 @@ def prettyPrintQuery(list_of_dicts):
 def saveContentToPage(content, target, editsummary, language='en', project='wikipedia'):
 	site = pywikibot.Site(language, project)
 	page = pywikibot.Page(site, target)
-	text = page.texts
 	page.text = content
 	page.save(editsummary)
+
+##############
+# TEST STACK #
+##############
 
 # print(makeAPIQuery('Thomas Edison', 'categories'))
 # saveContentToPage(content='Test', target='User:Resident Mario/sandbox', editsummary='Test')

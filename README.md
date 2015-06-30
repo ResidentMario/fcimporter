@@ -35,7 +35,7 @@ Instead of running on the most recent findable page you can you run on a subpage
 
     run FC-Importer.py -p "Wikipedia:Goings-on/March 2, 2014"
 
-By default the script throws the content at my sandbox, "User:Resident Mario/sandbox", for testing purposes. To have the script splash the proper Signpost subpage instead, use the "-t" parameter:
+By default the script throws the content at the next Signpost Featured content report section page, discovered via methods in the included `signpostlib.py`. To have the script splash a different Signpost subpage instead, use the "-t" parameter:
 
     run FC-Importer.py -t "Wikipedia:Wikipedia Signpost/2015-06-17/Featured_content
 
@@ -62,3 +62,4 @@ This script has a number of important limitations that are worth taking into acc
 | ------------- | ------------- |
 | 6/03/2015  | First version posted here. |
 | 6/07/2015  | This documentation was written!  |
+| 6/30/2015  | The script will now find the correct FCR page on its own by default. |

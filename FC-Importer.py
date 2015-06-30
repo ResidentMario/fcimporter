@@ -3,12 +3,11 @@ import sys
 import requests
 import json
 import datetime
+import signpostlib
 # Debugging flag; turning this on greatly increases the amount of information displayed in the console on run.
 debug = False
 # Target page. Usually this will be WP:GO, the latest GO page, but for testing purposes a capacity exists for running against older ones as well.
 target = "Wikipedia:Goings-on"
-# Log of all messages that have been written by the program. These are non-fatal errors that are displayed after the code is successfully run.
-log = ""
 # TODO: Fully implement debugging reporting.
 
 # IMPROVEMENTS TO-DO
@@ -35,13 +34,9 @@ def setGOPage():
 		if sys.argv[i].startswith(('-p', '-page')):
 			if sys.argv[i + 1].startswith('Wikipedia:Goings-on'):
 				return sys.argv[i + 1]
-				if debug:
-					print("A command-line argument has changed the GO page for this instance of the FC-Importer script to " + sys.argv[i + 1])
 			else:
 				raise NameError("The optional argument '-p' allows you to specify pages besides the base 'Wikipedia:Goings-on' for putting together by the script. However, this argument expects arguments of a specific form: 'python FC-Importer -p Wikipedia:Goings-on/November_2,_2008', for instance. Please make sure your argument conforms to this.")
 		i += 1
-	if debug:
-		print("No page-setting command-line argument has been detected, so the default GO page will be used.")
 	return getNameOfLatestGOPage()
 
 # A method which sets to page that which the content is to be written---the target.
@@ -59,7 +54,7 @@ def setContentTargetPage():
 		i += 1
 	if debug:
 		print("No page-setting command-line argument has been detected, so the default target page will be used.")
-	return 'User:Resident Mario/sandbox'
+	return signpostlib.getNextSignpostPublicationString() + '/Featured content'
 
 
 # A method to construct API requests with. Takes a dictionary of request parameters, returns the text of the query.

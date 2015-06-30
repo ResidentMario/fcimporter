@@ -4,27 +4,9 @@ import requests
 import json
 import datetime
 import signpostlib
-# Debugging flag; turning this on greatly increases the amount of information displayed in the console on run.
-debug = False
+
 # Target page. Usually this will be WP:GO, the latest GO page, but for testing purposes a capacity exists for running against older ones as well.
 target = "Wikipedia:Goings-on"
-# TODO: Fully implement debugging reporting.
-
-# IMPROVEMENTS TO-DO
-# Implement a creator field for featured pictures. DONE
-# Figure out how to get the start-end parameter in the report working.
-# Add a snippet view for what an article is about.
-# Run more tests to check for exceptional cases, document them, and figure out how to handle them.
-# Point it at the weekly FC draft pages, instead of at my sandbox!
-
-# A method to check the command line to see if debugging is enabled. Returns True if it is, False if it isn't.
-# First method that is run at execution.
-def setDebugStatus():
-	for arg in sys.argv[1:]:
-		if arg.startswith(('-d', '-debug')):
-			print("Debug status has been set to True. More information will appear in output during runtime, primarily for the purposes of debugging.")
-			return True
-	return False
 
 # A method to check the command line to see if a target argument has been provided. Returns either the new target, or resets the base target if none is provided.
 # The base target is the most recent subpage of "Wikipedia:Goings-on", set by the helper method getNameOfLatestGOPage().
@@ -47,13 +29,9 @@ def setContentTargetPage():
 		if sys.argv[i].startswith(('-t', '-target')):
 			if sys.argv[i + 1].startswith('Wikipedia:Wikipedia Signpost/'):
 				return sys.argv[i + 1]
-				if debug:
-					print("A command-line argument has changed the target page for this instance of the FC-Importer script to " + sys.argv[i + 1])
 			else:
 				raise NameError("The optional argument '-t' allows you to specify pages besides the base (Resident Mario's sandbox) for putting together by the script. However, this argument expects arguments of a specific form: 'python FC-Importer -t Wikipedia:Wikipedia Signpost/Newsroom/Test', for instance. It must always be a page within the Signpost's namespace. Please make sure your argument conforms to this.")
 		i += 1
-	if debug:
-		print("No page-setting command-line argument has been detected, so the default target page will be used.")
 	return signpostlib.getNextSignpostPublicationString() + '/Featured content'
 
 
@@ -62,8 +40,6 @@ def setContentTargetPage():
 # This method uses the requests library to handle concatenating the API request string and actually retrieving the data.
 def requestData(api_request_parameters):
 	r = requests.get("https://en.wikipedia.org/w/api.php?", params=api_request_parameters)
-	if debug:
-		print("\nMaking an API request using the following URL: " + r.url)
 	return json.loads(r.text)
 
 # A helper method which strips API data to get to the "core". The API is poorly designed, IMO, and you have to tunnel through a lot of junk to get at the actual data of interest.
@@ -94,8 +70,6 @@ def getGOData():
 	ret = []
 	page = "https://en.wikipedia.org/wiki/" + target
 	data = requests.get(page)
-	if debug:
-		print("Making an API request using the following URL: " + data.url)
 	return data
 
 # A method which, given the raw page, returns a dictionary pair list of featured topics on that page. Implements getGOData().
@@ -615,13 +589,30 @@ def writeContentString(list_of_featured_item_dicts):
 <noinclude>{{Wikipedia:Signpost/Template:Signpost-article-comments-end||{{subst:Wikipedia:Wikipedia Signpost/Issue|1}}|{{subst:Wikipedia:Wikipedia Signpost/Issue|4}}}}</noinclude>'''
 	return ret
 
-# First step of script execution is setting the debug and target flags, if the user specified alternatives to the defaults.
-debug = setDebugStatus()
+
+##################
+# RUNTIME SCRIPT #
+##################
 target = setGOPage()
-#### print(str(debug))
-#### print(target)
-### print(newgetFeaturedContentCandidateLinks())
-### print(getFeaturedTopicsList())
+print("Now adding nomination information to featured content list dictionaries...")
+featuredContent = getFeaturedContent()
+for item in featuredContent:
+ 	item = addLatestFeaturedContentNomination(item)
+print("Adding nominator information to featured content list dictionaries...")
+for item in featuredContent:
+	item = addFeaturedContentNominators(item)
+prettyPrintListOfDicts(featuredContent)
+to_be_written = writeContentString(featuredContent)
+writePage(to_be_written, setContentTargetPage())
+print("Done!")
+
+##############
+# TEST STACK #
+##############
+# print(str(debug))
+# print(target)
+# print(newgetFeaturedContentCandidateLinks())
+# print(getFeaturedTopicsList())
 ## print(checkFeaturedContentCandidate({'ns': 0, 'title': '2010'}))
 ## print(checkFeaturedContentCandidate({'ns': 0, 'title': 'Hydrogen'}))
 ## print(checkFeaturedContentCandidate({'title': 'James Whiteside McCay', 'ns': 4}))
@@ -645,17 +636,3 @@ target = setGOPage()
 # print(getListOfUniqueUsersFromData(requests.get('https://en.wikipedia.org/wiki/Wikipedia:Featured_picture_candidates/Paper_wasp_in_nest').text))
 # print(makeStringOfGOPageCandidates())
 # print(getNameOfLatestGOPage())
-
-print("Now adding nomination information to featured content list dictionaries...")
-featuredContent = getFeaturedContent()
-for item in featuredContent:
- 	item = addLatestFeaturedContentNomination(item)
-print("Adding nominator information to featured content list dictionaries...")
-for item in featuredContent:
-	item = addFeaturedContentNominators(item)
-prettyPrintListOfDicts(featuredContent)
-# prettyPrintListOfDicts(extractFeaturedContentOfOneType(featuredContent, 'Featured pictures'))
-# print(writeContentStringForFeaturedContentType(featuredContent, 'Featured article'))
-to_be_written = writeContentString(featuredContent)
-writePage(to_be_written, setContentTargetPage())
-print("Done!")

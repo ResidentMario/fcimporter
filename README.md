@@ -25,12 +25,6 @@ The simplest and most usual way to run the script is to run it without any param
 
 The script will seek out and draw content from the most recent archived WP:GO page it can find by working backwards from the current date as of the day that the script is run.
 
-If you wish to display some additional information during runtime, for debugging purposes, you can use the "-d" parameter:
-
-    run FC-Importer.py -d
-
-Unfortunately debugging remains poorly implemented, however, and this will not generate as much useful information as it ought to. Beautiful debugging is on the to-do list.
-
 Instead of running on the most recent findable page you can you run on a subpage of your choosing (but be aware of the limitations discussed in the section below). For instance:
 
     run FC-Importer.py -p "Wikipedia:Goings-on/March 2, 2014"
@@ -39,9 +33,9 @@ By default the script throws the content at the next Signpost Featured content r
 
     run FC-Importer.py -t "Wikipedia:Wikipedia Signpost/2015-06-17/Featured_content
 
-And of course you can combine these three options in one execution:
+And of course you can combine these two options in one execution:
 
-    run FC-Importer.py -t "Wikipedia:Wikipedia Signpost/2015-06-17/Featured_content -p "Wikipedia:Goings-on/March 15, 2015" -d
+    run FC-Importer.py -t "Wikipedia:Wikipedia Signpost/2015-06-17/Featured_content -p "Wikipedia:Goings-on/March 15, 2015"
 
 <h2>Limitations</h2>
 

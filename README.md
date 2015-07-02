@@ -48,7 +48,7 @@ This script has a number of important limitations that are worth taking into acc
 * A known limitation: because of the way that the script is written, a file that has been renamed since its nomination will reliably break the script.
 * A known limitation: because of substandard standardization even by the standards of the featured content processes, to find the nominaters for featured topics and featured portals this script finds and returns the first username that appears on those pages. This will cause it to fail to return the correct (or fully correct) output in cases when there are co-nominators present. Thought the script will be in the right 95% of the time, featured portals and featured topics ought to still be checked by the writers to make sure everything is in the right.
 * A known limitation: if a featured picture nomination's creator field is populated by multiple links, then the script will return '???'. The script will not attempt to discern who's who in these cases, as it is not intelligent enough to do so; it will instead leave that task to the section's writers.
-* The page target has to be in the domain of the Wikipedia Signpost (ae. a subpage of "Wikipedia:Wikipedia Signpost"). If an invalid target is provided the script will fail. If no parameter is provided, my sandbox ("User:Resident Mario/sandbox") will be used instead.
+* The page target has to be in the domain of the Wikipedia Signpost (ae. a subpage of "Wikipedia:Wikipedia Signpost"). If an invalid target is provided the script will fail. If no parameter is provided, the next Featured content report sectional page will be used instead.
 
 <h2>History</h2>
 

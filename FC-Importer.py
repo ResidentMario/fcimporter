@@ -1,7 +1,6 @@
 # FC-Importer.py
 # This script handles tedius setup tasks for the featured content report section of the Wikipedia Signpost.
 # The bulk of this script was written over the course of a few days of labor in early June 2015.
-# With >550 lines of code it sufficiently complicated to be very difficult to maintain.
 
 import pywikibot
 import sys
@@ -11,7 +10,7 @@ import datetime
 import signpostlib
 
 # Target page. Usually this will be WP:GO, the latest GO page, but for testing purposes a capacity exists for running against older ones as well.
-target = "Wikipedia:Goings-on"
+target = ""
 
 # RUNTIME SETTER METHOD: A method to check the command line to see if a target argument has been provided. Returns either the new target, or resets the base target if none is provided.
 # The base target is the most recent subpage of "Wikipedia:Goings-on", set by the helper method getNameOfLatestGOPage().
@@ -338,6 +337,10 @@ def getListOfUniqueUsersFromData(data):
 	for user in ret:
 		if ret.count(user) > 1:
 			ret.remove(user)
+	# Remove tunneled links containing "/", which are sometimes picked up but not wanted.
+	for user in ret:
+		if '/' in user:
+			ret.remove(user)
 	return ret
 
 # API HELPER METHOD: A method which returns the most recent WP:GO subpage, the one that is to be used by the featured content report.
@@ -524,19 +527,20 @@ def writeContentString(list_of_featured_item_dicts):
 ##################
 # RUNTIME SCRIPT #
 ##################
-target = setGOPage()
-print("Now adding nomination information to featured content list dictionaries...")
-featuredContent = getFeaturedContent()
-for item in featuredContent:
- 	item = addLatestFeaturedContentNomination(item)
-print("Adding nominator information to featured content list dictionaries...")
-for item in featuredContent:
-	item = addFeaturedContentNominators(item)
-# signpostlib.prettyPrintQuery(featuredContent)
-to_be_written = writeContentString(featuredContent)
-content_target = setContentTargetPage()
-signpostlib.saveContentToPage(to_be_written, content_target, 'Importing basic Featured Content report via the [https://github.com/ResidentMario/FC-Importer FC_Importer] script.')
-print("Done!")
+if __name__ == '__main__':
+	target = setGOPage()
+	print("Now adding nomination information to featured content list dictionaries...")
+	featuredContent = getFeaturedContent()
+	for item in featuredContent:
+ 		item = addLatestFeaturedContentNomination(item)
+	print("Adding nominator information to featured content list dictionaries...")
+	for item in featuredContent:
+		item = addFeaturedContentNominators(item)
+	# signpostlib.prettyPrintQuery(featuredContent)
+	to_be_written = writeContentString(featuredContent)
+	content_target = setContentTargetPage()
+	signpostlib.saveContentToPage(to_be_written, content_target, 'Importing basic Featured Content report via the [https://github.com/ResidentMario/FC-Importer FC-Importer] script.')
+	print("Done!")
 
 ##############
 # TEST STACK #

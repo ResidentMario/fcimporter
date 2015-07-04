@@ -9,12 +9,15 @@ import json
 import datetime
 import signpostlib
 
+####################
+# ARGUMENT PARSING #
+####################
 #
 # TODO:	 These two methods would be better handled by the argparse library.
 #
 
 # ARGUMENT PARSING METHOD: A method to check the command line to see if a target argument has been provided. Returns either the new target, or resets the base target if none is provided.
-# The base target is the most recent subpage of "Wikipedia:Goings-on", set by the helper method getNameOfLatestGOPage().
+# The base target is the most recent subpage of "Wikipedia:Goings-on", set by the helper method getPreviousGODateString().
 def setGOPage():
 	i = 1
 	while i < len(sys.argv):
@@ -24,7 +27,7 @@ def setGOPage():
 			else:
 				raise NameError("The optional argument '-p' allows you to specify pages besides the base 'Wikipedia:Goings-on' for putting together by the script. However, this argument expects arguments of a specific form: 'python FC-Importer -p Wikipedia:Goings-on/November_2,_2008', for instance. Please make sure your argument conforms to this.")
 		i += 1
-	return getNameOfLatestGOPage()
+	return getPreviousGODateString()
 
 # ARGUMENT PARSING METHOD: A method which sets to page that which the content is to be written---the target.
 #  This method is restricted to my own namespace and to pages within the Signpost domain.
@@ -331,30 +334,26 @@ def getListOfUniqueUsersFromData(data):
 			ret.remove(user)
 	return ret
 
-# API HELPER METHOD: A method which returns the most recent WP:GO subpage, the one that is to be used by the featured content report.
-def getNameOfLatestGOPage():
-	api_request_parameters = {'action': 'query', 'titles': makeStringOfGOPageCandidates(), 'format': 'json'}
-	latest_go_page_candidates = requestData(api_request_parameters)
-	# Because this particular query returns a list, it must be stripped differently than the other API queries I have used so far.
-	# I have written this stipping procedure into this method manually.
-	latest_go_page_candidates = latest_go_page_candidates['query']['pages']
-	for item in list(latest_go_page_candidates.keys()):
-		if int(item) > 0:
-			return latest_go_page_candidates[item]['title']
-	# If you reach this point the method fell through, and couldn't find the most recent GO page. This breaks execution.
-	return Exception("The most recent archived Wikipedia:Goings-on page could not be found.")
+# API HELPER METHOD
+def getPreviousGODate():
+	data = signpostlib.getPageHTML('User:Resident Mario/godate')
+	data = data[data.index('BOF') + 4:data.index('EOF') - 1]
+	datestring = datetime.datetime.strptime(data, '%Y-%m-%d')
+	return datestring
 
-# API HELPER METHOD: A method which makes a string of GO page candidates by taking today's date and then extrapolating fourteen days back.
-def makeStringOfGOPageCandidates():
-	ret = ''
-	pythonic_date = datetime.date.today()
-	for i in range(7, 22):
-		pythonic_date -= datetime.timedelta(days=1)
-		ret += "Wikipedia:Goings-on/" + pythonic_date.strftime("%B" + " ")
-		ret += str(pythonic_date.day).lstrip('0')
-		ret += ", " + str(pythonic_date.year) + "|"
-	ret = ret[0:len(ret) - 1]
-	return ret
+# API HELPER METHOD: A method which returns the most recent WP:GO subpage, the one that is to be used by the featured content report.
+def getPreviousGODateString(ns=True):
+	datestring = getPreviousGODate().strftime('%B %d, %Y')
+	# Need to remove the leading zero inserted by `%d`.
+	datestring = datestring[:len(datestring) - 5].replace('0', '') + datestring[len(datestring) - 5:]
+	if ns == False:
+		return datestring
+	else:
+		return 'Wikipedia:Goings-on/' + datestring
+
+# WRITER HELPER METHOD: Returns the date range string that is used to report the time period covered by the report.
+def getDateRangeString():
+	return getPreviousGODate().strftime('%d %B') + ' to ' + (getPreviousGODate() + datetime.timedelta(days=7)).strftime('%d %B')
 
 # DICTIONARY HELPER METHOD: An extraction method that returns a list of dicts associated with one specific featured content type.
 # This is used to de-glob the work that needs to be done in generating the output string.
@@ -495,7 +494,7 @@ def writeContentString(list_of_featured_item_dicts):
 [[File:bar.jpg|thumb|600px|center|Lead image caption. Tweak width as appropriate]]
 
 ----
-<center>'\'\'\'\'This \'\'Signpost\'\' \"Featured content\" report covers material promoted from START-END MONTH.\'\'\'\''</center>
+<center>'\'\'\'\'This \'\'Signpost\'\' \"Featured content\" report covers material promoted from ''' + getDateRangeString() + '''.\'\'\'\''</center>
 ----
 '''
 	ret += "\n<!-- Content initially imported from '" + target + "' via Resident Mario's FC-Importer script. -->" 
@@ -530,34 +529,3 @@ if __name__ == '__main__':
 	content_target = setContentTargetPage()
 	signpostlib.saveContentToPage(to_be_written, content_target, 'Importing basic Featured Content report via the [https://github.com/ResidentMario/FC-Importer FC-Importer] script.')
 	print("Done!")
-
-##############
-# TEST STACK #
-##############
-# print(str(debug))
-# print(target)
-# print(newgetFeaturedContentCandidateLinks())
-# print(getFeaturedTopicsList())
-## print(checkFeaturedContentCandidate({'ns': 0, 'title': '2010'}))
-## print(checkFeaturedContentCandidate({'ns': 0, 'title': 'Hydrogen'}))
-## print(checkFeaturedContentCandidate({'title': 'James Whiteside McCay', 'ns': 4}))
-## print(checkFeaturedContentCandidate({'title': 'Millennium Park', 'ns': 4}))
-## print(checkFeaturedContentCandidate({'title': 'James Whiteside McCay', 'ns': 0}))
-## print(checkFeaturedContentCandidate({'title': 'List of awards and nominations received by Ariana Grande', 'ns': 0}))
-## print(checkFeaturedContentCandidate({'title': 'File:Hohenzollernbrücke Köln.jpg', 'ns': 6}))
-## print(checkFeaturedContentCandidate({'title': 'Portal:Volcanoes', 'ns': 100}))
-# print(addLatestFeaturedContentNomination({'type': 'Featured article', 'ns': 0, 'title': 'A Quiet Night In'}))
-# print(addLatestFeaturedContentNomination({'type': 'Featured article', 'ns': 0, 'title': 'Hawaii hotspot'}))
-# print(addLatestFeaturedContentNomination({'type': 'Featured list', 'ns': 0, 'title': 'List of volcanoes in the Hawaiian – Emperor seamount chain'}))
-# print(addLatestFeaturedContentNomination({'type': 'Featured portal', 'ns': 100, 'title': 'Portal:Volcanoes'}))
-# print(addLatestFeaturedContentNomination({'type': 'Featured topic', 'ns': 4, 'title': 'Four Freedoms'}))
-# print(addLatestFeaturedContentNomination({'title': 'File:Johannes Vermeer - Gezicht op huizen in Delft, bekend als \'Het straatje\' - Google Art Project.jpg', 'type': 'Featured picture'}))
-# print(addFeaturedPictureNomination({'title': 'File:Johannes Vermeer - Gezicht op huizen in Delft, bekend als \'Het straatje\' - Google Art Project.jpg'}))
-# print(addFeaturedContentNominators({'type': 'Featured article', 'ns': 0, 'title': 'A Quiet Night In', 'nomination': 'Wikipedia:Featured article candidates/A Quiet Night In/archive1'}))
-# print(addFeaturedContentNominators({'type': 'Featured article', 'ns': 0, 'title': 'Mauna Kea', 'nomination': 'Wikipedia:Featured article candidates/Mauna Kea/archive1'}))
-# print(addFeaturedContentNominators({'type': 'Featured article', 'ns': 0, 'title': 'List of works by Georgette Heyer', 'nomination': 'Wikipedia:Featured list candidates/List of works by Georgette Heyer/archive1'}))
-# print(addFeaturedPictureNomination({'title': 'File:Johannes Vermeer - Gezicht op huizen in Delft, bekend als \'Het straatje\' - Google Art Project.jpg'}))
-# print(addFeaturedContentNominators({'type': 'Featured picture', 'ns': 4, 'title': 'File:Girl in White by Vincent Van Gogh - NGA.jpg', 'nomination': 'Wikipedia:Featured picture candidates/Girl in White'}))
-# print(getListOfUniqueUsersFromData(requests.get('https://en.wikipedia.org/wiki/Wikipedia:Featured_picture_candidates/Paper_wasp_in_nest').text))
-# print(makeStringOfGOPageCandidates())
-# print(getNameOfLatestGOPage())

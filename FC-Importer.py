@@ -9,10 +9,11 @@ import json
 import datetime
 import signpostlib
 
-# Target page. Usually this will be WP:GO, the latest GO page, but for testing purposes a capacity exists for running against older ones as well.
-target = ""
+#
+# TODO:	 These two methods would be better handled by the argparse library.
+#
 
-# RUNTIME SETTER METHOD: A method to check the command line to see if a target argument has been provided. Returns either the new target, or resets the base target if none is provided.
+# ARGUMENT PARSING METHOD: A method to check the command line to see if a target argument has been provided. Returns either the new target, or resets the base target if none is provided.
 # The base target is the most recent subpage of "Wikipedia:Goings-on", set by the helper method getNameOfLatestGOPage().
 def setGOPage():
 	i = 1
@@ -25,7 +26,7 @@ def setGOPage():
 		i += 1
 	return getNameOfLatestGOPage()
 
-# RUNTIME SETTER METHOD: A method which sets to page that which the content is to be written---the target.
+# ARGUMENT PARSING METHOD: A method which sets to page that which the content is to be written---the target.
 #  This method is restricted to my own namespace and to pages within the Signpost domain.
 def setContentTargetPage():
 	i = 1
@@ -58,30 +59,24 @@ def stripAPIData(query, type):
 	return query
 
 # API EXECUTION METHOD: A method which uses the requestData method to get a list of links from the Goings-on page.
-# This method is used to get all of the featured articles, lists, portals, and pictures. It does not retrieve featured topics, which must be gotten more hackily.
-# This is because featured topics are in the "Wikipedia" namespace, the results for which are buried under the torrent of links to other WP:GO pages present in the template at the foot of the page.
-# Featured topic candidates are instead retrieved directly via scrubbing the raw HTML.
+# This method is used to get all of the featured articles, lists, portals, and pictures.
+# It does not retrieve featured topics, which are currently gotten more hackily:
+# Featured topic candidates are instead retrieved directly via scrubbing the raw HTML, in a seperate loop.
 def getFeaturedContentCandidateLinks():
-	api_request_parameters = {'action': 'query', 'titles': target, 'format': 'json', 'prop': 'links', 'pllimit': '500', 'plnamespace': '0|6|100'}
-	links_dictionary = stripAPIData(requestData(api_request_parameters), 'links')
-	return links_dictionary
+	return signpostlib.makeAPIQuery(action='query', titles=target, format='json', prop='links', pllimit='500', plnamespace='0|6|100')
 
-# API EXECUTION METHOD: A method which gets the raw page data from the Goings-on page and filter it for featured articles.
-# Used to retrieve the featured topics. This is done seperately from the more efficient procedure for getting the other types of featured content off the page for reasons described in the notes to the method getFeaturedContentCandidateLinks().
-# Returns a list of dictionary pairs of featured topics.
-def getGOData():
-	ret = []
-	page = "https://en.wikipedia.org/wiki/" + target
-	data = requests.get(page)
-	return data
+#
+# TODO: Rewrite `getFeaturedTopicsList()` to use a continued link query to find out what featured topics were nominated.
+#		This will parallel the process used for all the other content types, and will be far less prone to errors.
+#
 
-# API EXECUTION METHOD: A method which, given the raw page, returns a dictionary pair list of featured topics on that page. Implements getGOData().
+# API EXECUTION METHOD: A method which parses the raw go page to discover and return a dictionary pair list of featured topics on that page.
 def getFeaturedTopicsList():
-	r = getGOData()
+	r = signpostlib.getPageHTML(target)
 	ret = []
 	# We now have the full HTML code of our target page. Now we have to manually grep it.
 	# An arcane process, borish process prone to errors. Can it be avoided? Not to my knowledge.
-	stripped_data = r.text[r.text.index("title=\"Wikipedia:Featured topics\""):]
+	stripped_data = r[r.index("title=\"Wikipedia:Featured topics\""):]
 	stripped_data = stripped_data[:stripped_data.index("</td>")]
 	stripped_data = stripped_data[stripped_data.index("</p>") + 4:]
 	while("<li>" in stripped_data):
@@ -229,13 +224,6 @@ def createFeaturedCandidacyPageLinkChecklist(featured_content_item):
 			ret += "Wikipedia:Featured topic candidates/" + featured_content_item['title'][featured_content_item['title'].index('/') + 1:] + "/archive" + str(n) + "|"
 	elif featured_content_item['type'] == 'Featured picture':
 		# There is no consistent formatting for featured picture nominations, which are nominated with any one of three titles, none normalized.
-		# The first is with the filename. This we can check.
-		# The second is with a description of the image. This we cannot check unless we go back and grab the source of WP:GO again, a complexity I am unwilling to do.
-		# The third is to nominate it with a description of the image that is furthermore independent of the description given at WP:GO. In this case nothing can be done.
-		# As a result this script will almost never be able to pick up featured picture nomination information.
-		# Therefore I have implemented methods for dealing with featured picture candidates, but they all either pass no information or empty sets.
-		# I make no attempt to get information on the nomination page or on the nominators, this must be done manually until such time as they standardize their format.
-		# The method bodies remain in place so that this script may be improved to include them in the future.
 		pass
 	ret = ret[0:len(ret) - 1]
 	return ret
@@ -287,7 +275,7 @@ def addFeaturedContentNominators(featured_content_item):
 		# FAs/FLs have by far the most consistent nomination scheme for extraction.
 		data = data[data.index('Nominator(s)'):]
 		data = data[:data.index('</dl>') + 25]
-		# +100 to make sure that a space is in the pickup. Having a space isn't as sure a bet as I initially thought; this is a workaround.
+		# +25 to make sure that a space is in the pickup. Having a space isn't as sure a bet as I initially thought; this is a workaround.
 		list_of_nominators = []
 		list_of_nominators = getListOfUniqueUsersFromData(data)
 	elif featured_content_item['type'] == 'Featured portal':
@@ -528,6 +516,7 @@ def writeContentString(list_of_featured_item_dicts):
 # RUNTIME SCRIPT #
 ##################
 if __name__ == '__main__':
+	# The `target` is a runtime variable storing the `WP:GO` page or subpage from which nomination information is being taken.
 	target = setGOPage()
 	print("Now adding nomination information to featured content list dictionaries...")
 	featuredContent = getFeaturedContent()

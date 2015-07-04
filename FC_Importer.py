@@ -514,7 +514,7 @@ def writeContentString(list_of_featured_item_dicts):
 	ret = '''{{Signpost draft}}
 <noinclude>{{Wikipedia:Signpost/Template:Signpost-header|||}}</noinclude>
 
-{{Wikipedia:Signpost/Template:Signpost-article-start|{{{1|(Your article's descriptive subtitle here)}}}|By [[User:{{subst:REVISIONUSER}}|]]| {{subst:#time:j F Y|{{subst:Wikipedia:Wikipedia Signpost/Issue|4}}}}}}
+{{Wikipedia:Signpost/Template:Signpost-article-start|{{{1|This Week's Featured Content}}}|By [[User:{{subst:REVISIONUSER}}|]]| {{subst:#time:j F Y|{{subst:Wikipedia:Wikipedia Signpost/Issue|4}}}}}}
 
 [[File:bar.jpg|thumb|600px|center|Lead image caption. Tweak width as appropriate]]
 

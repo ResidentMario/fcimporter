@@ -1,5 +1,5 @@
-# FC-Importer
-A script that handles tedius setup tasks for the featured content report section of the Wikipedia Signpost.
+# FC_Importer
+A script that handles tedious setup tasks for the featured content report section of the Wikipedia Signpost.
 
 <h2>About</h2>
 
@@ -36,6 +36,13 @@ By default the script throws the content at the next Signpost Featured content r
 And of course you can combine these two options in one execution:
 
     run FC-Importer.py -t "Wikipedia:Wikipedia Signpost/2015-06-17/Featured_content -p "Wikipedia:Goings-on/March 15, 2015"
+
+<h2>Configurability</h2>
+
+To improve configurability this script takes certain information from setup pages on Wikipedia:
+
+* The Signpost's next publication date is taken from [User:Resident Mario/pubdate](https://en.wikipedia.org/wiki/User:Resident_Mario/pubdate), which parallel's the Signpost's own master publication timetable tempate, [Wikipedia:Wikipedia Signpost/Issue](https://en.wikipedia.org/wiki/Wikipedia:Wikipedia_Signpost/Issue). This date might change if the Signpost moves its publication date backwards or forwards; though the script should be able to compensate automatically it will be worthwhile to check to make sure it is still operable, and fix the configuration of this page if it is not.
+* The date associated with the Goings-on page used for input into the FC draft is taken from [User:Resident Mario/godate](https://en.wikipedia.org/wiki/User:Resident_Mario/godate). This date might change if the Signpost moves its publication schedule for WP:GO forwards or backwards; FC is currently published two weeks post-archiving. It would also change in the occurance that the Goings-on archival schedule is changed, which is highly unlikely because the page has been publishing on the same schedule basis since 2004.
 
 <h2>Limitations</h2>
 

@@ -17,7 +17,7 @@ import datetime
 def getNextSignpostPublicationDate():
 	'''SEEKER METHOD: Finds the next Signpost issue date.
 		RETURNS: A datetime object corresponding to the date of the next issue's publication.'''
-	data = getPageHTML('User:Resident Mario/pubdate')
+	data = getPurgedPageHTML('User:Resident Mario/pubdate')
 	data = data[data.index('BOF') + 4:data.index('EOF') - 1]
 	return datetime.datetime.strptime(data, '%Y-%m-%d')
 
@@ -56,11 +56,23 @@ def getSignpostContents(pub_string):
 ########################
 
 def getPageHTML(page, language='en', project='wikipedia'):
-	'''SEEKER METHOD: Sniffs and returns the contents of the Signpost issue for a certain date as a list.
+	'''SEEKER METHOD: Returns a page's HTML.
 		PARAMETERS:
 		(req) pub_string:		The string-title to look for things in (e.g. `Wikipedia:Wikipedia Signpost/2015-04-09`)
 		NOTE: To get the the sections of the latest issue use `getSignpostContents(getPreviousSignpostPublicationString(ns=False))`.'''
 	return requests.get('https://' + language + '.' + project + '.org/wiki/' + page).text
+
+def getPurgedPageHTML(page, language='en', project='wikipedia'):
+	'''SEEKER METHOD: Returns a page's HTML, differing from the method above in implementation.
+		This method does not suffer from a particular page-purging problem that the above method has.
+		PARAMETERS:
+		(req) pub_string:		The string-title to look for things in (e.g. `Wikipedia:Wikipedia Signpost/2015-04-09`)
+		NOTE: To get the the sections of the latest issue use `getSignpostContents(getPreviousSignpostPublicationString(ns=False))`.'''
+	# page = pywikibot.Page(pywikibot.Site(language, project), page)
+	# page.purge()
+	# return page.expand_text()
+	# The above should work if the below does not.
+	return requests.get('https://' + language + '.' + project + '.org/w/index.php?title=' + page + '&action=purge&action=view').text
 
 def getPageWikicode(page, language='en', project='wikipedia'):
 	'''EXECUTION METHOD: Returns the wikicode contents of a wiki page.
@@ -121,3 +133,6 @@ def saveContentToPage(content, target, editsummary, language='en', project='wiki
 	page = pywikibot.Page(site, target)
 	page.text = content
 	page.save(editsummary)
+
+print(getPurgedPageHTML('User:Resident Mario/sandbox'))
+print(getNextSignpostPublicationDate())

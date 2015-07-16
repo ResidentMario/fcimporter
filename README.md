@@ -21,21 +21,21 @@ Currently I am running this script manually on my own machine on a weekly basis.
 
 The simplest and most usual way to run the script is to run it without any parameters at all:
 
-    run FC-Importer.py
+    run FC_Importer.py
 
 The script will seek out and draw content from the most recent archived WP:GO page it can find by working backwards from the current date as of the day that the script is run.
 
 Instead of running on the most recent findable page you can you run on a subpage of your choosing (but be aware of the limitations discussed in the section below). For instance:
 
-    run FC-Importer.py -p "Wikipedia:Goings-on/March 2, 2014"
+    run FC_Importer.py -p "Wikipedia:Goings-on/March 2, 2014"
 
 By default the script throws the content at the next Signpost Featured content report section page, discovered via methods in the included `signpostlib.py`. To have the script splash a different Signpost subpage instead, use the "-t" parameter:
 
-    run FC-Importer.py -t "Wikipedia:Wikipedia Signpost/2015-06-17/Featured_content
+    run FC_Importer.py -t "Wikipedia:Wikipedia Signpost/2015-06-17/Featured_content
 
 And of course you can combine these two options in one execution:
 
-    run FC-Importer.py -t "Wikipedia:Wikipedia Signpost/2015-06-17/Featured_content -p "Wikipedia:Goings-on/March 15, 2015"
+    run FC_Importer.py -t "Wikipedia:Wikipedia Signpost/2015-06-17/Featured_content -p "Wikipedia:Goings-on/March 15, 2015"
 
 <h2>Configurability</h2>
 

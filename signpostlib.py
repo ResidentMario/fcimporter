@@ -133,6 +133,3 @@ def saveContentToPage(content, target, editsummary, language='en', project='wiki
 	page = pywikibot.Page(site, target)
 	page.text = content
 	page.save(editsummary)
-
-print(getPurgedPageHTML('User:Resident Mario/sandbox'))
-print(getNextSignpostPublicationDate())

@@ -407,7 +407,7 @@ def addFeaturedContentNominators(featured_content_item):
 	list_of_nominators = []
 	if featured_content_item['type'] == 'Featured article' or featured_content_item['type'] == 'Featured list':
 		# FAs/FLs have by far the most consistent nomination scheme for extraction.
-		data = data[data.index('Nominator(s)'):]
+		data = data[data.index('Nominator'):]
 		data = data[:data.index('</dl>') + 25]
 		# +25 to make sure that a space is in the pickup. Having a space isn't as sure a bet as I initially thought; this is a workaround.
 		list_of_nominators = []

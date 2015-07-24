@@ -44,6 +44,11 @@ To improve configurability this script takes certain information from setup page
 * The Signpost's next publication date is taken from [User:Resident Mario/pubdate](https://en.wikipedia.org/wiki/User:Resident_Mario/pubdate), which parallel's the Signpost's own master publication timetable tempate, [Wikipedia:Wikipedia Signpost/Issue](https://en.wikipedia.org/wiki/Wikipedia:Wikipedia_Signpost/Issue). This date might change if the Signpost moves its publication date backwards or forwards; though the script should be able to compensate automatically it will be worthwhile to check to make sure it is still operable, and fix the configuration of this page if it is not.
 * The date associated with the Goings-on page used for input into the FC draft is taken from [User:Resident Mario/godate](https://en.wikipedia.org/wiki/User:Resident_Mario/godate). This date might change if the Signpost moves its publication schedule for WP:GO forwards or backwards; FC is currently published two weeks post-archiving. It would also change in the occurance that the Goings-on archival schedule is changed, which is highly unlikely because the page has been publishing on the same schedule basis since 2004.
 
+<h2>Bugs</h2>
+Because of the way that Wikipedia servers handle incoming queries an issue occassionally occurs with the server returning a cached copy of a time-sensitive page being requested. I am told that this is an issue with the setup of [Vagrant](https://en.wikipedia.org/wiki/Vagrant_%28software%29) on Wikipedia (see also the [MediaWiki manual page](https://www.mediawiki.org/wiki/MediaWiki-Vagrant)). The practical effect is that when this script is run without any commands (`python FC_Imptorter.py`) it sometimes fails to intake the correctly dated `Wikipedia:Goings-on`, because instead of letting the script go to `User:Resident Mario/godate` the engine returns an old copy of the page, from which the script gets a stale date.
+
+If this happens, the workarond is to set the correct goings-on page manually using the `-p` parameter. I have so far been only partially successful in fixing this bug. See also [this StackOverflow thread](http://stackoverflow.com/questions/31375022/purging-the-cache-of-the-requests-library-in-python).
+
 <h2>Limitations</h2>
 
 This script has a number of important limitations that are worth taking into account in regular use.

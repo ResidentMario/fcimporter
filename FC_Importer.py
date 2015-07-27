@@ -533,7 +533,7 @@ def writeContentString(list_of_featured_item_dicts):
 {{-}}
 [[File:bar.jpg|thumb|600px|center|Footer image caption. Tweak width as appropriate]]
 
-<noinclude>{{Wikipedia:Signpost/Template:Signpost-article-comments-end||{{subst:Wikipedia:Wikipedia Signpost/Issue|1}}|{{subst:Wikipedia:Wikipedia Signpost/Issue|4}}}}</noinclude>'''
+<noinclude>{{Wikipedia:Signpost/Template:Signpost-article-comments-end||{{subst:Wikipedia:Wikipedia Signpost/Issue|1}}|{{subst:Wikipedia:Wikipedia Signpost/Issue|5}}}}</noinclude>'''
 	return ret
 
 ##################

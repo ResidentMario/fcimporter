@@ -495,8 +495,12 @@ def getCreator(raw_data):
 		if raw_data.count('</a>') > 1:
 			return '???'
 		else:
-			ret = raw_data[raw_data.index('title="') + 7:]
-			return ret[:ret.index('">')]
+			# This first if statement handles a code-breaker: links to userpages on other wikis that are formatted as external links would otherwise break the script.
+			if 'class="external text"' in raw_data:
+				return '???'
+			else:
+				ret = raw_data[raw_data.index('title="') + 7:]
+				return ret[:ret.index('">')]
 	elif '/wiki/' in raw_data:
 		return "$" + raw_data[raw_data.index('">') + 2:raw_data.index('</a>')]
 		# The "$" here is a special character which is used by makeCreatorString to figure out whether or not a plaintitled nomination can be linked to or not.

@@ -49,6 +49,8 @@ Because of the way that Wikipedia servers handle incoming queries an issue occas
 
 If this happens, the workarond is to set the correct goings-on page manually using the `-p` parameter. I have so far been only partially successful in fixing this bug. See also [this StackOverflow thread](http://stackoverflow.com/questions/31375022/purging-the-cache-of-the-requests-library-in-python).
 
+<b>NOTE:</b> This appears to have now been fixed. Still evaluating.
+
 <h2>Limitations</h2>
 
 This script has a number of important limitations that are worth taking into account in regular use.

@@ -456,7 +456,7 @@ def writeContentStringForFeaturedContentType(list_param, content_type):
 		ret += '\n' + '[[File:Foo.jpg|thumb|300px|Caption of first FA to display]] <!--Repeat as appropriate-->' + '\n' 
 	else: # Featured list case.
 		ret += '\n' + '[[File:Foo.jpg|thumb|300px|Caption of first FL to display]] <!--Repeat as appropriate-->' + '\n' 
-	ret += '{{ucfirst:{{numtext|' + str(len(list_of_stuff)) + '}}}}' + ' [[Wikipedia:' + content_type + '|]]s were promoted this week.'
+	ret += '{{ucfirst:{{numtext|' + str(len(list_of_stuff)) + '}}}}' + ' [[Wikipedia:' + content_type.lower() + '|]]s were promoted this week.'
 	for item in list_of_stuff:
 		ret += '\n* <b>' + '[[:' + item['title'] + '|' + stripSubpage(item['title']) + ']]</b> <small>\'\'('
 		ret += '[[' + item['nomination'] + '|nominated]] by ' + makeContributorsStringFromList(item['nominators']) + ')\'\'</small> '
@@ -472,7 +472,7 @@ def writeContentStringForFeaturedPicture(list_param):
 		return ret
 	ret += '===' + 'Featured picture' + 's===' + '\n'
 	ret += '[[File:Foo.jpg|thumb|300px|Caption of first FP to display]] <!--Repeat as appropriate-->\n'
-	ret += '{{ucfirst:{{numtext|' + str(len(list_of_stuff)) + '}}}}' + ' [[Wikipedia:' + 'Featured pictures' + '|]]s were promoted this week.'
+	ret += '{{ucfirst:{{numtext|' + str(len(list_of_stuff)) + '}}}}' + ' [[Wikipedia:' + 'featured pictures' + '|]]s were promoted this week.'
 	for item in list_of_stuff:
 		if 'File:' in item['nomination']:
 			ret += '\n* <b>' + '[[:' + item['title'] + ']]</b> <small>\'\'('

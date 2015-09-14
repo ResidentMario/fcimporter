@@ -11,6 +11,12 @@ Traditionally a part of the compliation process has always been visiting the nom
 
 This script uses the requests library to simplify API request construction and retrieval and the pywikibot library to handle writing content to Wikipedia smoothly.
 
+<h2>Installation</h2>
+
+This script requires:
+* [Python 3.4.0](https://docs.python.org/3.4/)
+* [Pywikibot](https://www.mediawiki.org/wiki/Manual:Pywikibot)
+
 <h2>Input</h2>
 
 Running this script directly requires:

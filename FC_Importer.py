@@ -454,7 +454,7 @@ def writeContentStringForFeaturedContentType(list_param, content_type):
 	ret += '===' + content_type + 's===' + '\n'
 	if list_of_stuff[0]['type'] == 'Featured article':
 		ret += '\n' + '[[File:Foo.jpg|thumb|300px|Caption of first FA to display]] <!--Repeat as appropriate-->' + '\n' 
-	else: # Featured list case.
+	elif list_of_stuff[0]['type'] == 'Featured list': # Featured list case.
 		ret += '\n' + '[[File:Foo.jpg|thumb|300px|Caption of first FL to display]] <!--Repeat as appropriate-->' + '\n' 
 	ret += '{{ucfirst:{{numtext|' + str(len(list_of_stuff)) + '}}}}' + ' [[Wikipedia:' + content_type.lower() + '|]]s were promoted this week.'
 	for item in list_of_stuff:

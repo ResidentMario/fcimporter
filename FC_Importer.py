@@ -470,15 +470,17 @@ def writeContentStringForFeaturedPicture(list_param):
 	list_of_stuff = extractFeaturedContentOfOneType(list_param, 'Featured picture')
 	if len(list_of_stuff) == 0:
 		return ret
-	ret += '===' + 'Featured picture' + 's===' + '\n'
-	ret += '[[File:Foo.jpg|thumb|300px|Caption of first FP to display]] <!--Repeat as appropriate-->\n'
+	ret += '{{clear}}\n' + '===' + 'Featured picture' + 's===' + '\n'
 	ret += '{{ucfirst:{{numtext|' + str(len(list_of_stuff)) + '}}}}' + ' [[Wikipedia:' + 'featured pictures' + '|]]s were promoted this week.'
+	ret += "<gallery mode=packed heights=225px>"
 	for item in list_of_stuff:
 		if 'File:' in item['nomination']:
-			ret += '\n* <b>' + '[[:' + item['title'] + ']]</b> <small>\'\'('
+			ret += '\n' + item['title'] + '| '
 		else:
-			ret += '\n* <b>' + '[[:' + item['title'] + '|' + item['nomination'][item['nomination'].index('/') + 1:] + ']]</b> <small>\'\'('
-		ret += 'created by ' + makeCreatorString(item['creator']) + '; ' + '[[' + item['nomination'] + '|nominated]] by ' + makeContributorsStringFromList(item['nominators']) + ')\'\'</small> '
+			ret += '\n' + item['title'] + '| '
+		ret += '<small>\'\'(created by ' + makeCreatorString(item['creator']) + '; ' + '[[' + item['nomination'] + '|nominated]] by ' + makeContributorsStringFromList(item['nominators']) + ')\'\'</small> '
+	# Final loop: a workaround for a bug in picture captions that causes smart link piping, e.g. [[NASA|]] or [[User:Resident Mario|]] to not work.
+	ret = ret.replace('|]]',']]')
 	return ret
 
 def getCreator(raw_data):

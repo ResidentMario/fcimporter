@@ -1,5 +1,6 @@
 '''FC-Importer.py
-	This script handles tedious setup tasks for the featured content report section of the Wikipedia Signpost.'''
+	This script handles tedious setup tasks for the featured content report section of the Wikipedia Signpost.
+	Note that the fcimporter.py script in the signpostlab repository is a copy of this script.'''
 
 import pywikibot
 import sys

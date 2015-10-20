@@ -1,4 +1,4 @@
-# FC_Importer
+# fcimporter
 A script that handles tedious setup tasks for the featured content report section of the Wikipedia Signpost.
 
 <h2>About</h2>
